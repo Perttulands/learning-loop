@@ -53,7 +53,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
   - Trend detection: compare last-10 vs all-time, delta thresholds ±0.05
   - Per-agent breakdown within each template
 
-- [ ] **US-105** Backfill historical runs
+- [x] **US-105** Backfill historical runs
   - Run feedback-collector.sh against all existing ~102 run records in `~/.openclaw/workspace/state/runs/`
   - Generate initial template-scores.json from backfilled data
   - Seed pattern-registry.json with historical patterns

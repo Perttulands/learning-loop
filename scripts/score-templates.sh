@@ -30,8 +30,8 @@ if [[ ${#feedback_files[@]} -eq 0 ]]; then
   exit 0
 fi
 
-# Merge all feedback records into one array
-all_feedback="$(jq -s '.' "${feedback_files[@]}")"
+# Merge all feedback records into one array (filter out non-feedback files like pattern-registry.json)
+all_feedback="$(jq -s '[.[] | select(.bead != null)]' "${feedback_files[@]}")"
 
 # Process with jq: group by template, compute scores
 echo "$all_feedback" | jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
