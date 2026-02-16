@@ -38,7 +38,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
   - Classify outcome using the 5-category system (full_pass / partial_pass / agent_failure / infra_failure / timeout)
   - Must work standalone: `./scripts/feedback-collector.sh <run-record.json>` with no external deps beyond jq
 
-- [ ] **US-103** Build failure pattern detector
+- [x] **US-103** Build failure pattern detector
   - Detect and tag patterns: test-failure-after-completion, lint-failure-after-completion, scope-creep, incomplete-work, infra-tmux, infra-disk, repeated-failure, verification-gap
   - Detection rules per PRD §4.1 pattern table
   - Integrate into feedback-collector.sh as a function or separate callable script

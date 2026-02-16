@@ -109,6 +109,9 @@ classify_outcome() {
 outcome="$(classify_outcome)"
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
+# Detect failure patterns
+failure_patterns="$("$SCRIPT_DIR/detect-patterns.sh" --update-registry "$RUN_FILE")"
+
 # Build feedback JSON
 jq -n \
   --arg schema_version "1.0.0" \
@@ -126,6 +129,7 @@ jq -n \
   --argjson duration_ratio "$duration_ratio" \
   --argjson retried "$retried" \
   --arg prompt_hash "$prompt_hash" \
+  --argjson failure_patterns "$failure_patterns" \
   '{
     schema_version: $schema_version,
     bead: $bead,
@@ -143,6 +147,6 @@ jq -n \
       duration_ratio: $duration_ratio,
       retried: $retried
     },
-    failure_patterns: [],
+    failure_patterns: $failure_patterns,
     prompt_hash: $prompt_hash
   }' > "$FEEDBACK_DIR/$bead.json"
