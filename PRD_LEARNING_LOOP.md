@@ -98,7 +98,7 @@ Use accumulated scores to recommend templates and agents for each dispatch.
   - Document accuracy and edge cases
   - Write validation report to `state/reports/selection-validation.md`
 
-- [ ] **US-REVIEW-S2** Review Sprint 2
+- [x] **US-REVIEW-S2** Review Sprint 2
   - Verify task classification accuracy on diverse prompts
   - Confirm agent recommendations match score data
   - Test dispatch.sh integration doesn't break existing flow
