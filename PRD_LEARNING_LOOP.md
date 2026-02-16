@@ -44,7 +44,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
   - Integrate into feedback-collector.sh as a function or separate callable script
   - Write pattern occurrences to pattern-registry.json
 
-- [ ] **US-104** Build score-templates.sh
+- [x] **US-104** Build score-templates.sh
   - Script: `scripts/score-templates.sh`
   - Input: all `state/feedback/*.json` files
   - Output: `state/scores/template-scores.json`
