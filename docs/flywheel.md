@@ -78,6 +78,14 @@ Dispatch → Execute → Verify → Record → Analyze → Score → Select → 
 - Score regression detected
 - Weekly report generated
 
+## Retrospective
+
+`scripts/retrospective.sh` compares pre-loop vs post-loop metrics:
+- Splits feedback records by boundary date (explicit or auto-detected)
+- Computes pass rate, template usage, retry rate, failure patterns for each period
+- Improvement deltas and threshold tuning suggestions
+- Output: `state/reports/retrospective.json`
+
 ## Data Flow
 
 ```

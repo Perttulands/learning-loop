@@ -20,6 +20,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/weekly-strategy.sh` | Weekly cross-cutting strategy report |
 | `scripts/backfill.sh` | Process historical runs through the feedback pipeline |
 | `scripts/install-cron.sh` | Install/remove cron entries for scheduled execution |
+| `scripts/retrospective.sh` | Compare pre-loop vs post-loop metrics, suggest threshold tuning |
 | `scripts/validate-selection.sh` | Validate template selection against real task history |
 
 ## State Files

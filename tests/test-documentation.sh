@@ -63,6 +63,11 @@ assert "README.md mentions learning loop scripts" "grep -q 'scripts/' '$PROJECT_
 assert "README.md mentions all 4 loops" "grep -c 'feedback-collector\|score-templates\|refine-prompts\|weekly-strategy' '$PROJECT_DIR/README.md' | grep -q '[4-9]'"
 assert "README.md mentions cron" "grep -qi 'cron' '$PROJECT_DIR/README.md'"
 assert "README.md lists key scripts" "grep -q 'select-template\|guardrails\|notify' '$PROJECT_DIR/README.md'"
+assert "README.md mentions retrospective.sh" "grep -q 'retrospective.sh' '$PROJECT_DIR/README.md'"
+
+# --- retrospective.sh in docs ---
+assert "AGENTS.md mentions retrospective.sh" "grep -q 'retrospective.sh' '$PROJECT_DIR/AGENTS.md'"
+assert "flywheel.md mentions retrospective.sh" "grep -q 'retrospective.sh' '$PROJECT_DIR/docs/flywheel.md'"
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed (total $((PASS + FAIL)))"

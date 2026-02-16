@@ -183,6 +183,8 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Generate before/after report on pass rate, template usage, failure patterns
   - Identify threshold tuning opportunities
 
+- [x] **US-405a** Add retrospective.sh to AGENTS.md, README.md, and docs/flywheel.md (5 min)
+
 - [ ] **US-REVIEW-S4** Review Sprint 4
   - End-to-end test: dispatch → verify → feedback → score → select → refine cycle
   - Confirm notifications fire correctly
