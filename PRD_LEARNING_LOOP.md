@@ -68,11 +68,11 @@ Build the feedback loop foundation: every run produces a structured feedback rec
 ---
 
 ## Sprint 2: Template Scoring + Selection
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 Use accumulated scores to recommend templates and agents for each dispatch.
 
-- [ ] **US-201** Build select-template.sh
+- [x] **US-201** Build select-template.sh
   - Script: `scripts/select-template.sh`
   - Input: task description string
   - Output: JSON with template, variant, agent, model, score, confidence, reasoning, warnings
