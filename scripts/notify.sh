@@ -5,7 +5,7 @@
 # Env: WAKE_GATEWAY (path to wake-gateway.sh), NOTIFY_ENABLED (true/false)
 set -euo pipefail
 
-WAKE_GATEWAY="${WAKE_GATEWAY:-/home/perttu/.openclaw/workspace/scripts/wake-gateway.sh}"
+WAKE_GATEWAY="${WAKE_GATEWAY:-${WORKSPACE_DIR:-$HOME/.openclaw/workspace}/scripts/wake-gateway.sh}"
 NOTIFY_ENABLED="${NOTIFY_ENABLED:-true}"
 
 usage() {

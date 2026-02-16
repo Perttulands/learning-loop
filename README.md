@@ -12,7 +12,7 @@ Dispatch → Execute → Verify → Record → Analyze → Score → Select → 
 
 ## Problem
 
-The agentic coding swarm on ahjo-1 executes 100+ runs but learns nothing between them. Verification pass rate sits at ~19%. Templates are underused (95/102 runs use `custom`). Failures repeat. This project closes the feedback loop.
+The agentic coding swarm executes 100+ runs but learns nothing between them. Verification pass rate sits at ~19%. Templates are underused (95/102 runs use `custom`). Failures repeat. This project closes the feedback loop.
 
 ## Architecture
 
