@@ -20,11 +20,11 @@ The agentic coding swarm executes 100+ runs but learns nothing between them. Eve
 ---
 
 ## Sprint 1: Foundation
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 Build the feedback loop foundation: every run produces a structured feedback record, outcomes are classified, and patterns are tagged.
 
-- [ ] **US-101** Define outcome and feedback JSON schemas
+- [x] **US-101** Define outcome and feedback JSON schemas
   - Create `config/schemas/feedback.json` and `config/schemas/outcome.json`
   - Outcome types: `full_pass`, `partial_pass`, `agent_failure`, `infra_failure`, `timeout`
   - Feedback record fields: bead, timestamp, template, agent, model, outcome, signals, failure_patterns, prompt_hash

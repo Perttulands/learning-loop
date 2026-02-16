@@ -1,0 +1,26 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Outcome classification for agent runs",
+  "outcome_types": [
+    {
+      "name": "full_pass",
+      "description": "All verification checks passed"
+    },
+    {
+      "name": "partial_pass",
+      "description": "Some verification checks passed, others failed"
+    },
+    {
+      "name": "agent_failure",
+      "description": "Agent produced broken or incomplete output"
+    },
+    {
+      "name": "infra_failure",
+      "description": "Infrastructure issue prevented completion (tmux, disk, network)"
+    },
+    {
+      "name": "timeout",
+      "description": "Run exceeded time limit"
+    }
+  ]
+}

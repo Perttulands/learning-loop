@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Feedback record schema for agent run outcomes",
+  "fields": {
+    "bead": {
+      "type": "string",
+      "description": "Bead identifier for the run"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "iso8601",
+      "description": "When the feedback record was created"
+    },
+    "template": {
+      "type": "string",
+      "description": "Prompt template used for the run"
+    },
+    "agent": {
+      "type": "string",
+      "description": "Agent that executed the run"
+    },
+    "model": {
+      "type": "string",
+      "description": "LLM model used"
+    },
+    "outcome": {
+      "type": "string",
+      "enum": ["full_pass", "partial_pass", "agent_failure", "infra_failure", "timeout"],
+      "description": "Outcome classification from outcome.json types"
+    },
+    "signals": {
+      "type": "object",
+      "description": "Extracted verification signals",
+      "fields": {
+        "exit_clean": {
+          "type": "boolean",
+          "description": "Agent process exited cleanly"
+        },
+        "tests_pass": {
+          "type": "boolean",
+          "description": "All tests passed"
+        },
+        "lint_pass": {
+          "type": "boolean",
+          "description": "Linting passed"
+        },
+        "ubs_clean": {
+          "type": "boolean",
+          "description": "No undefined behavior sanitizer issues"
+        },
+        "truthsayer_clean": {
+          "type": "boolean",
+          "description": "Truthsayer verification passed"
+        },
+        "duration_ratio": {
+          "type": "number",
+          "description": "Actual duration / expected duration ratio"
+        },
+        "retried": {
+          "type": "boolean",
+          "description": "Whether this run was a retry of a previous attempt"
+        }
+      }
+    },
+    "failure_patterns": {
+      "type": "array",
+      "items": "string",
+      "description": "Tagged failure pattern identifiers"
+    },
+    "prompt_hash": {
+      "type": "string",
+      "description": "SHA256 hash of the prompt content for dedup"
+    }
+  }
+}
