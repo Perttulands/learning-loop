@@ -8,3 +8,11 @@ state/reports/
 !state/feedback/.gitkeep
 !state/scores/.gitkeep
 !state/reports/.gitkeep
+
+# Logs (contain agent output, potentially sensitive)
+ralph-*.log
+*.log
+
+# Environment
+.env
+.env.*
