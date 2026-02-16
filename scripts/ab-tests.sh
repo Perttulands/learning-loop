@@ -178,6 +178,11 @@ cmd_evaluate() {
       decision="promoted"
       echo "Promoted: $var (score: $var_score) beats $orig (score: $orig_score) by $diff"
 
+      # Notify: variant promoted
+      "$SCRIPT_DIR/notify.sh" variant-promoted \
+        --variant "$var" --original "$orig" \
+        --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true
+
       # Archive original, rename variant to original name
       mkdir -p "$TEMPLATES_DIR/.archive"
       if [[ -f "$TEMPLATES_DIR/${orig}.md" ]]; then
@@ -190,6 +195,11 @@ cmd_evaluate() {
     else
       decision="discarded"
       echo "Discarded: $var (score: $var_score) did not beat $orig (score: $orig_score) by >= 0.1"
+
+      # Notify: variant discarded
+      "$SCRIPT_DIR/notify.sh" variant-discarded \
+        --variant "$var" --original "$orig" \
+        --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true
 
       # Archive variant
       mkdir -p "$TEMPLATES_DIR/.archive"

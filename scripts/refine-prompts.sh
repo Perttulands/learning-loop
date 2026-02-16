@@ -221,6 +221,12 @@ ${instructions}
   fi
 
   echo "Refined '$template_name' → '$variant_name' (trigger: $trigger)"
+
+  # Notify: variant created
+  "$SCRIPT_DIR/notify.sh" variant-created \
+    --template "$template_name" --variant "$variant_name" \
+    --trigger "$trigger" --pass-rate "$full_pass_rate" 2>/dev/null || true
+
   refined_count=$((refined_count + 1))
 done
 

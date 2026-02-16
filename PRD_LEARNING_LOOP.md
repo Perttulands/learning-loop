@@ -107,7 +107,7 @@ Use accumulated scores to recommend templates and agents for each dispatch.
 ---
 
 ## Sprint 3: Prompt Refinement + A/B Testing
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 Templates improve themselves through automated refinement triggered by failure patterns.
 
@@ -148,11 +148,11 @@ Templates improve themselves through automated refinement triggered by failure p
 ---
 
 ## Sprint 4: Strategy Evolution + Integration + Polish
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 The flywheel runs unattended with safety guardrails, notifications, and documentation.
 
-- [ ] **US-401** Notification integration
+- [x] **US-401** Notification integration
   - Notify via wake-gateway on: variant created, variant promoted/discarded, score regression, weekly report
   - Message format per PRD §5.3
   - Integrate with existing `wake-gateway.sh`

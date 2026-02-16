@@ -162,3 +162,6 @@ echo "$report" > "$report_file"
 summary="$(echo "$report" | jq -r '.summary')"
 echo "$summary"
 echo "Report written to: $report_file"
+
+# Notify: weekly report
+"$SCRIPT_DIR/notify.sh" weekly-report --summary "$summary" 2>/dev/null || true

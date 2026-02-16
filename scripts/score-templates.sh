@@ -158,6 +158,33 @@ def avg_duration(records):
 }
 ')"
 
+# Detect score regressions before overwriting
+new_scores="$(echo "$combined" | jq '.template_scores')"
+if [[ -f "$SCORES_DIR/template-scores.json" ]]; then
+  old_scores="$(cat "$SCORES_DIR/template-scores.json")"
+  # Compare scores: alert if any template drops by > 0.1 (with >= 10 runs)
+  regressions="$(jq -n --argjson old "$old_scores" --argjson new "$new_scores" '
+    [($new.templates // [])[] | select(.total_runs >= 10) |
+      .template as $t | .score as $ns |
+      ([$old.templates[] | select(.template == $t)] | if length > 0 then .[0].score else null end) as $os |
+      select($os != null and ($os - $ns) > 0.1) |
+      {template: $t, old_score: $os, new_score: $ns}
+    ]')"
+
+  reg_count="$(echo "$regressions" | jq 'length')"
+  if [[ "$reg_count" -gt 0 ]]; then
+    i=0
+    while [[ $i -lt $reg_count ]]; do
+      tpl="$(echo "$regressions" | jq -r ".[$i].template")"
+      os="$(echo "$regressions" | jq -r ".[$i].old_score")"
+      ns="$(echo "$regressions" | jq -r ".[$i].new_score")"
+      "$SCRIPT_DIR/notify.sh" score-regression \
+        --template "$tpl" --old-score "$os" --new-score "$ns" 2>/dev/null || true
+      i=$((i + 1))
+    done
+  fi
+fi
+
 # Split combined output into two files
-echo "$combined" | jq '.template_scores' > "$SCORES_DIR/template-scores.json"
+echo "$new_scores" > "$SCORES_DIR/template-scores.json"
 echo "$combined" | jq '.agent_scores' > "$SCORES_DIR/agent-scores.json"
