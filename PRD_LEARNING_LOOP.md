@@ -126,7 +126,7 @@ Templates improve themselves through automated refinement triggered by failure p
   - Archive originals to `templates/.archive/`
   - Log all decisions in `state/scores/refinement-log.json`
 
-- [ ] **US-303** Wire cron jobs
+- [x] **US-303** Wire cron jobs
   - Hourly: score-templates.sh
   - Daily 03:00 UTC: refine-prompts.sh --auto
   - Weekly Sunday 00:00 UTC: weekly-strategy.sh
