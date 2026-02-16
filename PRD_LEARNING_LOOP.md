@@ -20,7 +20,7 @@ The agentic coding swarm executes 100+ runs but learns nothing between them. Eve
 ---
 
 ## Sprint 1: Foundation
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 Build the feedback loop foundation: every run produces a structured feedback record, outcomes are classified, and patterns are tagged.
 
@@ -59,7 +59,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
   - Seed pattern-registry.json with historical patterns
   - Create backfill script: `scripts/backfill.sh` that iterates all runs
 
-- [ ] **US-REVIEW-S1** Review Sprint 1
+- [x] **US-REVIEW-S1** Review Sprint 1
   - Verify all feedback records generated correctly from sample runs
   - Validate template-scores.json has accurate aggregations
   - Confirm standalone testability of each script

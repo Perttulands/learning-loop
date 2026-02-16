@@ -1,0 +1,79 @@
+# Progress Log
+
+## Learnings
+- Bash `((VAR++))` returns exit 1 when VAR is 0 under `set -e`. Use `VAR=$((VAR + 1))` instead.
+- JSON schemas: keep them self-contained (inline enums rather than cross-file refs) for standalone usability.
+- When mixing file types in a directory (feedback records + registry), filter by schema fields (e.g., `select(.bead != null)`) to avoid processing non-target files.
+
+---
+
+## Iteration 1 - US-101: Define outcome and feedback JSON schemas
+- Created `config/schemas/outcome.json` with 5 outcome types (full_pass, partial_pass, agent_failure, infra_failure, timeout) and schema_version
+- Created `config/schemas/feedback.json` with all required fields (bead, timestamp, template, agent, model, outcome, signals, failure_patterns, prompt_hash) and 7 signal sub-fields
+- Created `tests/test-schemas.sh` with 27 assertions covering structure, fields, sub-fields, and cross-references
+- Fixed bash arithmetic pitfall: `((PASS++))` → `PASS=$((PASS + 1))` for `set -e` compatibility
+**Summary:** Task: US-101 | Files: [config/schemas/outcome.json, config/schemas/feedback.json, tests/test-schemas.sh] | Tests: PASS (27/27) | Review: PASSED | Next: US-102
+---
+
+## Iteration 2 - US-102: Build feedback-collector.sh
+- Created `scripts/feedback-collector.sh` (~110 lines): reads run record JSON, extracts signals, classifies outcome, outputs feedback JSON
+- Outcome classification priority chain: timeout → infra_failure (by failure_reason) → agent_failure (exit_code!=0 or status=failed) → full_pass (all checks pass) → partial_pass
+- Signals extracted: exit_clean, tests_pass, lint_pass, ubs_clean, truthsayer_clean, duration_ratio (vs 600s baseline), retried (attempt>1)
+- Skips runs with status=running (no output produced)
+- FEEDBACK_DIR env var overrides output path for testability
+- Created `tests/test-feedback-collector.sh` with 38 assertions covering all 5 outcome types, signal extraction, retry detection, running skip, JSON validity, and usage message
+- Smoke-tested against real run record bd-10p: correctly classified as partial_pass
+- Learnings: Real run records have verification embedded (not separate file). failure_reason values like "tmux-launch-failed", "status-file" map to infra_failure.
+**Summary:** Task: US-102 | Files: [scripts/feedback-collector.sh, tests/test-feedback-collector.sh] | Tests: PASS (38/38) | Review: PASSED | Next: US-103
+---
+
+## Iteration 3 - US-103: Build failure pattern detector
+- Created `scripts/detect-patterns.sh` (~147 lines): standalone script that detects 8 failure patterns from run record JSON
+- Patterns: test-failure-after-completion, lint-failure-after-completion, scope-creep (>1800s), incomplete-work (2+ verif fails), infra-tmux, infra-disk, repeated-failure (attempt>1), verification-gap (2+ skipped)
+- Output: JSON array of detected pattern names to stdout
+- `--update-registry` flag writes/updates `pattern-registry.json` with count, first_seen, last_seen, last_beads (max 10)
+- REGISTRY_FILE env var overrides registry path for testability
+- Integrated into `feedback-collector.sh`: failure_patterns field now populated via detect-patterns.sh call
+- Created `tests/test-detect-patterns.sh` with 25 assertions covering all 8 patterns, clean runs, multiple patterns, JSON format, registry accumulation, and usage
+- All 90 tests pass across 3 suites (25 + 38 + 27)
+- Learnings: When test fixtures omit optional fields like truthsayer, jq `// "skipped"` default triggers verification-gap detection. Always include all fields in fixtures for accurate testing.
+**Summary:** Task: US-103 | Files: [scripts/detect-patterns.sh, tests/test-detect-patterns.sh, scripts/feedback-collector.sh] | Tests: PASS (25/25) | Review: PASSED | Next: US-104
+---
+
+## Iteration 4 - US-104: Build score-templates.sh
+- Created `scripts/score-templates.sh` (~115 lines): aggregates feedback records into template scores using a single jq pipeline
+- Composite score formula: `(full_pass_rate × 1.0) + (partial_pass_rate × 0.4) - (retry_rate × 0.2) - (timeout_rate × 0.3)` clamped [0, 1]
+- Infra failures excluded from scoring (scoreable_runs tracks non-infra count)
+- Confidence levels: low (<5), medium (5-19), high (≥20)
+- Trend detection: compares last-10 full_pass_rate vs all-time, ±0.05 threshold → improving/declining/stable/insufficient_data
+- Per-agent breakdown reuses compute_score() for zero duplication
+- FEEDBACK_DIR and SCORES_DIR env vars for testability, consistent with other scripts
+- Created `tests/test-score-templates.sh` with 30 assertions covering: empty input, all-pass, mixed outcomes, confidence levels, retry impact, score clamping, multiple templates, agent breakdown, trend detection (improving/declining/stable/insufficient_data), infra exclusion
+- All 120 tests pass across 4 suites (27 + 38 + 25 + 30)
+- Learnings: Use `shopt -s nullglob` instead of `2>/dev/null` on bash array glob assignments — the latter causes syntax errors. Sorting by bead name is a reasonable chronological proxy when timestamps aren't granular enough.
+**Summary:** Task: US-104 | Files: [scripts/score-templates.sh, tests/test-score-templates.sh] | Tests: PASS (30/30) | Review: PASSED | Next: US-105
+---
+
+## Iteration 5 - US-105: Backfill historical runs
+- Created `scripts/backfill.sh` (~55 lines): iterates all run records through feedback-collector.sh, then generates template-scores.json via score-templates.sh
+- Delegates entirely to existing scripts (feedback-collector.sh, score-templates.sh) — zero logic duplication
+- Tracks processed/skipped/errors counts with summary output
+- Env vars (FEEDBACK_DIR, SCORES_DIR, REGISTRY_FILE) exported for sub-scripts
+- Fixed `score-templates.sh`: added `select(.bead != null)` filter to exclude non-feedback JSON files (pattern-registry.json coexists in feedback dir)
+- Created `tests/test-backfill.sh` with 19 assertions: usage, missing dir, empty dir, single run, multi-template, running skip, registry seeding, summary output, idempotency
+- Smoke-tested against real 102 run records: 90 processed, 12 skipped (running), 0 errors, 6 templates scored
+- All 139 tests pass across 5 suites (27 + 38 + 25 + 30 + 19)
+- Learnings: pattern-registry.json in feedback dir gets picked up by *.json glob in score-templates.sh — always filter by schema fields when mixing file types in a directory.
+**Summary:** Task: US-105 | Files: [scripts/backfill.sh, tests/test-backfill.sh, scripts/score-templates.sh] | Tests: PASS (19/19) | Review: PASSED | Next: US-REVIEW-S1
+---
+
+## Iteration 6 - US-REVIEW-S1: Review Sprint 1
+- Reviewed all 4 implementation scripts and 5 test files against Linus criteria (good taste, simplicity, no special cases, no duplication)
+- Ran all 139 tests across 5 suites: all pass (27+38+25+30+19)
+- Acceptance criteria verified: feedback records generated correctly, template-scores.json accurate, all scripts standalone+executable, schema_version present in schemas and outputs
+- Cross-task duplication analysis: field extraction shared between feedback-collector.sh and detect-patterns.sh is acceptable (standalone requirement); test helpers duplicated across test files also acceptable (standalone test convention)
+- Data flow consistent: backfill.sh → feedback-collector.sh → detect-patterns.sh → score-templates.sh
+- Naming conventions consistent across all scripts (FEEDBACK_DIR, SCORES_DIR, REGISTRY_FILE env vars)
+- No issues found — Sprint 1 complete
+**Summary:** Task: US-REVIEW-S1 | Files: [all Sprint 1 scripts reviewed] | Tests: PASS (139/139) | Review: PASSED | Next: US-201
+---
