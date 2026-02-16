@@ -133,7 +133,7 @@ Templates improve themselves through automated refinement triggered by failure p
   - Create `config/crontab.txt` with entries
   - Install script: `scripts/install-cron.sh`
 
-- [ ] **US-304** Build weekly-strategy.sh
+- [x] **US-304** Build weekly-strategy.sh
   - Script: `scripts/weekly-strategy.sh`
   - Output: `state/reports/strategy-YYYY-WNN.json`
   - Contents: week-over-week trends, agent comparison, top 3 failure patterns, A/B results, recommendations
