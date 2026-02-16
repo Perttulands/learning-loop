@@ -143,3 +143,70 @@
 - No issues found — Sprint 2 complete
 **Summary:** Task: US-REVIEW-S2 | Files: [all Sprint 2 scripts reviewed] | Tests: PASS (96/96) | Review: PASSED | Next: US-301
 ---
+
+## Iteration 12 - US-301: Build refine-prompts.sh
+- Created `scripts/refine-prompts.sh` (~165 lines): identifies underperforming templates and generates refined variants
+- Three trigger conditions: full_pass_rate < 0.50 (≥10 runs), pattern count ≥ 5, declining trend
+- Pattern-to-strategy mapping via case/esac: test-failure, lint-failure, scope-creep, incomplete-work, repeated-failure, verification-gap each get specific instruction text
+- Three modes: preview (default, shows what would change), --dry-run (shows triggers/patterns), --auto (generates variant files + logs)
+- Variant naming: auto-increments (bug-fix-v1, bug-fix-v2, ...) by checking existing files
+- Refinement log: `state/scores/refinement-log.json` accumulates entries with template, variant, trigger, timestamp, score data, and patterns applied
+- Env vars (SCORES_DIR, TEMPLATES_DIR, REGISTRY_FILE, REFINEMENT_LOG) for testability, consistent with other scripts
+- Created `tests/test-refine-prompts.sh` with 32 assertions covering: usage, no scores, no refinement needed, all 3 trigger types, --auto/--dry-run/preview modes, variant creation/naming/content, refinement log structure/accumulation, all 6 pattern strategies, multi-pattern application, missing template warning, log timestamps
+- All 267 tests pass across 10 suites (27+38+25+30+19+27+24+19+26+32)
+- Learnings: jq number formatting varies (0.3 vs 0.30) — use numeric comparison rather than string equality when asserting floating point values in tests.
+**Summary:** Task: US-301 | Files: [scripts/refine-prompts.sh, tests/test-refine-prompts.sh] | Tests: PASS (32/32) | Review: PASSED | Next: US-302
+---
+
+## Iteration 13 - US-302: Implement A/B test lifecycle
+- Created `scripts/ab-tests.sh` (~200 lines): subcommand-based A/B test lifecycle manager with create, pick, record, evaluate, list commands
+- State tracked in `state/scores/ab-tests.json` with schema_version, tests array (original, variant, status, target_runs, original_runs, variant_runs)
+- Alternating dispatch via `pick` subcommand: returns whichever template has fewer runs (original on tie), outputs JSON with ab_test flag
+- Evaluation logic: compares template-scores.json scores for original vs variant, promotes if diff >= 0.1, otherwise discards
+- Promotion: archives original to `templates/.archive/`, copies variant to original name, archives variant
+- Discard: archives variant to `templates/.archive/`
+- All decisions logged to `state/scores/refinement-log.json` with type "ab_test_result", scores, and timestamps
+- Integrated with `select-template.sh`: added A/B test check via `ab-tests.sh pick` call, variant field populated when ab_test active
+- Created `tests/test-ab-tests.sh` with 45 assertions covering: usage, create (basic, custom target_runs, append), pick (alternation, no test), record (increment counts), evaluate (promote/discard/skip incomplete/skip completed), archive (promote archives original, discard archives variant), refinement-log entries, list (active/empty)
+- All 290 tests pass across 11 suites (45+24+19+25+19+38+32+27+30+26+27)
+- Learnings: jq `--arg field` + `.[$field] = ...` in update expressions causes syntax errors — use explicit field names in separate branches instead.
+**Summary:** Task: US-302 | Files: [scripts/ab-tests.sh, tests/test-ab-tests.sh, scripts/select-template.sh] | Tests: PASS (45/45) | Review: PASSED | Next: US-303
+---
+
+## Iteration 14 - US-303: Wire cron jobs
+- Created `config/crontab.txt`: declarative template with `__PROJECT_DIR__` placeholders for 3 cron entries (hourly score-templates, daily refine-prompts --auto at 03:00, weekly strategy at Sunday 00:00)
+- Created `scripts/install-cron.sh` (~50 lines): installs/removes cron entries using marker-based idempotent merge, supports --dry-run, --remove, --help
+- All log output redirected to `state/logs/` per-script log files
+- Created `tests/test-install-cron.sh` with 21 assertions covering: crontab.txt existence/format/schedules/paths/log-redirection, install-cron.sh existence/executable/usage/dry-run/remove/marker/paths
+- All 311 tests pass across 12 suites (27+38+25+30+19+27+24+19+26+32+45+21)
+- Learnings: Marker-based crontab management (append marker comment to each line, grep -v to remove) is clean and idempotent — no need for temp files or lock mechanisms.
+**Summary:** Task: US-303 | Files: [config/crontab.txt, scripts/install-cron.sh, tests/test-install-cron.sh] | Tests: PASS (21/21) | Review: PASSED | Next: US-304
+---
+
+## Iteration 15 - US-304: Build weekly-strategy.sh
+- Created `scripts/weekly-strategy.sh` (~80 lines): generates weekly strategy report from all learning loop state data
+- Single jq pipeline produces complete report JSON with 7 sections: template_trends, agent_comparison, top_failure_patterns, ab_results, refinement_activity, recommendations, summary
+- Reads 5 input sources: template-scores.json, agent-scores.json, pattern-registry.json, refinement-log.json, ab-tests.json (all optional with defaults)
+- Report file: `state/reports/strategy-YYYY-WNN.json` with ISO week numbering
+- Recommendations auto-generated: underperforming templates, top failure pattern, agent performance gaps
+- Human-readable summary printed to stdout
+- SCORES_DIR, FEEDBACK_DIR, REPORTS_DIR env vars for testability, consistent with all other scripts
+- Created `tests/test-weekly-strategy.sh` with 37 assertions covering: existence/executable, usage, missing scores dir, report generation, all 7 JSON sections (structure + content), A/B results with active/completed tests, refinement activity, file naming format, stdout summary
+- All 348 tests pass across 13 suites (27+38+25+30+19+27+24+19+26+32+45+21+37)
+- Learnings: jq `to_entries` on a flat object (pattern-registry.json) is cleaner than trying to iterate keys — converts {key: {count: N}} to array of {key, value} pairs naturally.
+**Summary:** Task: US-304 | Files: [scripts/weekly-strategy.sh, tests/test-weekly-strategy.sh] | Tests: PASS (37/37) | Review: PASSED | Next: US-REVIEW-S3
+---
+
+## Iteration 16 - US-REVIEW-S3: Review Sprint 3
+- Reviewed all 4 Sprint 3 tasks (US-301 through US-304): refine-prompts.sh, ab-tests.sh, install-cron.sh + crontab.txt, weekly-strategy.sh
+- All 135 Sprint 3 tests pass (32+45+21+37) across 4 test suites
+- Acceptance criteria verified:
+  - Refinement triggers fire correctly: low_pass_rate (<0.50, ≥10 runs), pattern count ≥5, declining trend — all with correct threshold gating
+  - A/B test tracking: create/pick/record/evaluate lifecycle, alternating dispatch, promote at ≥0.1 diff, archive on promote/discard, refinement-log entries
+  - Cron schedules well-separated (hourly/daily 03:00/weekly Sunday 00:00), marker-based idempotent install, log redirection
+  - Weekly report has 7 JSON sections (template_trends, agent_comparison, top_failure_patterns, ab_results, refinement_activity, recommendations, summary), ISO week naming, human-readable stdout
+- Linus criteria: good taste (single jq pipelines, clean subcommand dispatch), no special cases (fallback defaults), simplicity (80-230 lines each), no duplication (shared refinement-log format, factored log_decision)
+- Cross-task: consistent env vars (SCORES_DIR, TEMPLATES_DIR, REFINEMENT_LOG), clean data flow (refine→variant→ab-test→evaluate→log), select-template.sh A/B integration correct
+- No issues found — Sprint 3 complete
+**Summary:** Task: US-REVIEW-S3 | Files: [all Sprint 3 scripts reviewed] | Tests: PASS (135/135) | Review: PASSED | Next: US-401
+---
