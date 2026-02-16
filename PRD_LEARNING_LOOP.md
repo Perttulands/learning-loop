@@ -30,7 +30,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
   - Feedback record fields: bead, timestamp, template, agent, model, outcome, signals, failure_patterns, prompt_hash
   - Include schema_version field for future migrations
 
-- [ ] **US-102** Build feedback-collector.sh
+- [x] **US-102** Build feedback-collector.sh
   - Script: `scripts/feedback-collector.sh`
   - Input: run record JSON path + verification JSON path
   - Output: `state/feedback/<bead>.json`
