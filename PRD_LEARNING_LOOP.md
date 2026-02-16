@@ -165,7 +165,7 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Prompt hash tracking to detect retries and avoid double-counting
   - Refinement loop breaker: after 5 refinements without improvement, flag for human review
 
-- [ ] **US-403** Pattern registry management
+- [x] **US-403** Pattern registry management
   - Script: `scripts/manage-patterns.sh`
   - Commands: list, detail <pattern>, mitigate <pattern> <description>, effectiveness <pattern>
   - Track mitigation_effective boolean based on post-mitigation occurrence rate
