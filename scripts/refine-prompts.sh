@@ -125,12 +125,23 @@ fi
 
 refined_count=0
 
+GUARDRAILS_SCRIPT="$SCRIPT_DIR/guardrails.sh"
+
 for template_name in $candidates; do
   template_file="$TEMPLATES_DIR/${template_name}.md"
 
   if [[ ! -f "$template_file" ]]; then
     echo "Warning: Template file not found for '$template_name': $template_file" >&2
     continue
+  fi
+
+  # Refinement loop breaker: skip templates with 5+ refinements without improvement
+  if [[ -x "$GUARDRAILS_SCRIPT" ]]; then
+    loop_check="$("$GUARDRAILS_SCRIPT" check-refinement-loop "$template_name" 2>&1)"
+    if echo "$loop_check" | grep -qi "loop breaker"; then
+      echo "Skipping '$template_name': refinement loop breaker triggered. Needs human review."
+      continue
+    fi
   fi
 
   # Get score data for this template

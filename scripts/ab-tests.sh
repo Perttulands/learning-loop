@@ -63,6 +63,12 @@ cmd_create() {
     }]' "$AB_TESTS_FILE" > "$AB_TESTS_FILE.tmp"
   mv "$AB_TESTS_FILE.tmp" "$AB_TESTS_FILE"
 
+  # Enforce variant limit
+  local guardrails="$SCRIPT_DIR/guardrails.sh"
+  if [[ -x "$guardrails" ]]; then
+    "$guardrails" enforce-variant-limit "$original" 2>/dev/null || true
+  fi
+
   echo "Created A/B test: $original vs $variant (target: $target_runs runs each)"
 }
 
@@ -175,6 +181,13 @@ cmd_evaluate() {
 
     # Promote if variant > original by >= 0.1
     if echo "$diff >= 0.1" | bc -l | grep -q '^1'; then
+      # Check NO_AUTO_PROMOTE gate
+      if [[ "${NO_AUTO_PROMOTE:-false}" == "true" ]]; then
+        echo "Promotion gated: $var (score: $var_score) beats $orig (score: $orig_score) by $diff. Requires human review."
+        i=$((i + 1))
+        continue
+      fi
+
       decision="promoted"
       echo "Promoted: $var (score: $var_score) beats $orig (score: $orig_score) by $diff"
 

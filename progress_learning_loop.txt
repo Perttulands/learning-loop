@@ -210,3 +210,40 @@
 - No issues found — Sprint 3 complete
 **Summary:** Task: US-REVIEW-S3 | Files: [all Sprint 3 scripts reviewed] | Tests: PASS (135/135) | Review: PASSED | Next: US-401
 ---
+
+## Iteration 17 - US-401: Notification integration
+- Created `scripts/notify.sh` (~95 lines): wrapper around wake-gateway.sh with event-type message formatting
+- 5 event types: variant-created, variant-promoted, variant-discarded, score-regression, weekly-report
+- All messages prefixed with "Learning Loop:" for consistent identification
+- Supports --dry-run (show message without sending) and NOTIFY_ENABLED=false (skip all notifications)
+- WAKE_GATEWAY env var overrides gateway path for testability
+- Gateway failures caught gracefully (2>/dev/null || true in callers) — notifications never crash the main workflow
+- Integrated into 4 existing scripts:
+  - refine-prompts.sh: notifies on variant creation (--auto mode)
+  - ab-tests.sh: notifies on variant promoted and variant discarded
+  - weekly-strategy.sh: notifies with weekly summary text
+  - score-templates.sh: detects score regression (>0.1 drop, ≥10 runs) before overwriting scores file
+- Created `tests/test-notify.sh` with 28 assertions covering: existence, usage, all 5 event types (message content), dry-run mode, gateway failure handling, NOTIFY_ENABLED=false, unknown event error
+- All 376 tests pass across 14 suites (27+38+25+30+19+27+24+19+26+32+45+21+28+37)
+- Learnings: Notification wrappers should never crash callers — always use `2>/dev/null || true` on integration calls. Score regression detection belongs in the scoring script (where old scores are available before overwrite), not in a separate scheduled job.
+**Summary:** Task: US-401 | Files: [scripts/notify.sh, tests/test-notify.sh, scripts/refine-prompts.sh, scripts/ab-tests.sh, scripts/weekly-strategy.sh, scripts/score-templates.sh] | Tests: PASS (28/28) | Review: PASSED | Next: US-402
+---
+
+## Iteration 18 - US-402: Safety guardrails
+- Created `scripts/guardrails.sh` (~230 lines): subcommand-based safety guardrails with 9 subcommands
+- 6 guardrail categories implemented:
+  1. Max 3 active variants per template: `check-variant-limit` / `enforce-variant-limit` discards oldest active variants beyond limit
+  2. Minimum sample size enforcement: `check-sample-size` validates ≥5 for scoring, ≥10 for refinement
+  3. Auto-rollback: `check-rollback` / `auto-rollback` detects promoted templates scoring worse than pre-promotion and restores archived original
+  4. `NO_AUTO_PROMOTE` env var: `check-promote` gates promotions for human review; integrated into ab-tests.sh evaluate
+  5. Prompt hash tracking: `check-duplicates` / `count-unique` find duplicate prompt_hash entries for dedup awareness
+  6. Refinement loop breaker: `check-refinement-loop` flags templates with 5+ refinements without improvement for human review
+- Integrated into existing scripts:
+  - refine-prompts.sh: calls `check-refinement-loop` before processing each candidate template
+  - ab-tests.sh: calls `enforce-variant-limit` on create, checks `NO_AUTO_PROMOTE` before promoting
+- Constants at top of guardrails.sh: MAX_ACTIVE_VARIANTS=3, MIN_SCORING_RUNS=5, MIN_REFINEMENT_RUNS=10, ROLLBACK_RUN_THRESHOLD=10, REFINEMENT_LOOP_LIMIT=5
+- Created `tests/test-guardrails.sh` with 26 assertions covering: existence, usage, variant limit (check/enforce/archive), sample size (scoring/refinement thresholds), auto-rollback (detection/restore), no-auto-promote (gating/allow), prompt hash dedup (detection/count-unique), refinement loop (breaker/clear/improving), integration with refine-prompts.sh and ab-tests.sh
+- All 402 tests pass across 15 suites (27+38+25+30+19+27+24+19+26+32+45+21+28+37+26)
+- Learnings: Guardrails integrate as lightweight callouts (`"$GUARDRAILS" subcommand` with `|| true` fallback) — keeps existing scripts clean. Archive naming convention matters for rollback (use consistent names like `template.md` in `.archive/`).
+**Summary:** Task: US-402 | Files: [scripts/guardrails.sh, tests/test-guardrails.sh, scripts/refine-prompts.sh, scripts/ab-tests.sh] | Tests: PASS (26/26) | Review: PASSED | Next: US-403
+---

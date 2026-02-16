@@ -157,7 +157,7 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Message format per PRD §5.3
   - Integrate with existing `wake-gateway.sh`
 
-- [ ] **US-402** Safety guardrails
+- [x] **US-402** Safety guardrails
   - Max 3 active variants per template (oldest discarded if exceeded)
   - Minimum sample size enforcement (no scoring <5, no refinement <10)
   - Auto-rollback: if promoted template scores worse for 10 runs, revert and alert
