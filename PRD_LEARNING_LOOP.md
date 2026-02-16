@@ -68,7 +68,7 @@ Build the feedback loop foundation: every run produces a structured feedback rec
 ---
 
 ## Sprint 2: Template Scoring + Selection
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 Use accumulated scores to recommend templates and agents for each dispatch.
 
@@ -107,18 +107,18 @@ Use accumulated scores to recommend templates and agents for each dispatch.
 ---
 
 ## Sprint 3: Prompt Refinement + A/B Testing
-**Status:** NOT STARTED
+**Status:** IN PROGRESS
 
 Templates improve themselves through automated refinement triggered by failure patterns.
 
-- [ ] **US-301** Build refine-prompts.sh
+- [x] **US-301** Build refine-prompts.sh
   - Script: `scripts/refine-prompts.sh`
   - Threshold triggers: full_pass_rate < 0.50 (≥10 runs), pattern count ≥ 5, declining trend 2 cycles
   - Apply refinement strategies per failure pattern (PRD §4.4 table)
   - Generate variant: `templates/<name>-vN.md`
   - Support `--auto` flag for cron and `--dry-run` for preview
 
-- [ ] **US-302** Implement A/B test lifecycle
+- [x] **US-302** Implement A/B test lifecycle
   - Track active tests in `state/scores/ab-tests.json`
   - Alternating dispatch between original and variant (integrate with select-template.sh)
   - After target_runs reached per variant, compare scores

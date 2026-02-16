@@ -53,8 +53,15 @@ if [[ ! -f "$SCORES_FILE" ]]; then
   exit 0
 fi
 
+# Check for active A/B test and get pick
+AB_SCRIPT="$SCRIPT_DIR/ab-tests.sh"
+ab_pick=""
+if [[ -x "$AB_SCRIPT" ]]; then
+  ab_pick="$("$AB_SCRIPT" pick "$task_type" 2>/dev/null || true)"
+fi
+
 # Look up matching template and pick best agent
-jq --arg task_type "$task_type" --arg task "$TASK" '
+jq --arg task_type "$task_type" --arg task "$TASK" --argjson ab_pick "${ab_pick:-null}" '
   # Find matching template (null if not found)
   ([.templates[] | select(.template == $task_type)] | if length > 0 then .[0] else null end) as $match |
 
@@ -65,8 +72,11 @@ jq --arg task_type "$task_type" --arg task "$TASK" '
     else . end
   ) as $warnings |
 
-  # Template info
-  (if $match then $match.template else $task_type end) as $template |
+  # Template info (A/B test may override)
+  (if $ab_pick != null and $ab_pick.ab_test == true then $ab_pick.template
+   elif $match then $match.template else $task_type end) as $template |
+  (if $ab_pick != null and $ab_pick.ab_test == true then $ab_pick.variant
+   else null end) as $variant |
   (if $match then $match.score else 0 end) as $score |
   (if $match then $match.confidence else "none" end) as $confidence |
 
@@ -87,7 +97,7 @@ jq --arg task_type "$task_type" --arg task "$TASK" '
 
   {
     template: $template,
-    variant: null,
+    variant: $variant,
     agent: $agent,
     model: "unknown",
     task_type: $task_type,
