@@ -86,7 +86,7 @@ Use accumulated scores to recommend templates and agents for each dispatch.
   - Per-agent per-template breakdown
   - Used by select-template.sh for agent recommendation
 
-- [ ] **US-203** Integration hook for dispatch.sh
+- [x] **US-203** Integration hook for dispatch.sh
   - Add `--auto-select` flag support to dispatch.sh
   - Call select-template.sh with prompt text, use returned template/agent
   - Advisory mode: log recommendation, don't override explicit args

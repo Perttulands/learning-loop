@@ -1,0 +1,68 @@
+--- a/scripts/dispatch.sh
++++ b/scripts/dispatch.sh
+@@ -18,7 +18,7 @@
+ # ── Arguments ────────────────────────────────────────────────────────────────
+
+ usage() {
+-    echo "Usage: $0 <bead-id> <repo-path> <agent-type> <prompt> [--branch <name>] [--force]" >&2
++    echo "Usage: $0 <bead-id> <repo-path> <agent-type> <prompt> [--branch <name>] [--force] [--auto-select]" >&2
+ }
+
+ (( $# >= 4 )) || { usage; exit 1; }
+@@ -31,6 +31,7 @@
+ BRANCH=""
+ FORCE_DISPATCH="${DISPATCH_FORCE:-false}"
+ TEMPLATE_NAME="custom"
++AUTO_SELECT="false"
+
+ while (( $# > 0 )); do
+     case "$1" in
+@@ -38,9 +39,47 @@
+         --branch) BRANCH="$2"; shift 2 ;;
+         --force)  FORCE_DISPATCH="true"; shift ;;
++        --auto-select) AUTO_SELECT="true"; shift ;;
+         *)        TEMPLATE_NAME="$1"; shift ;;
+     esac
+ done
+
++# ── Auto-select: advisory template/agent recommendation ─────────────────────
++# When --auto-select is passed, call select-template.sh with the prompt text
++# to get a data-driven recommendation. This is advisory mode:
++#   - If user explicitly passed a template name (not "custom"), preserve it
++#   - If user explicitly passed an agent type, preserve it
++#   - Log the recommendation for observability regardless
++
++LEARNING_LOOP_DIR="${LEARNING_LOOP_DIR:-$(cd "$SCRIPT_DIR/../../learning-loop" && pwd)}"
++SELECT_SCRIPT="$LEARNING_LOOP_DIR/scripts/select-template.sh"
++
++if [[ "$AUTO_SELECT" == "true" && -x "$SELECT_SCRIPT" ]]; then
++    RECOMMENDATION="$(SCORES_DIR="${SCORES_DIR:-$LEARNING_LOOP_DIR/state/scores}" "$SELECT_SCRIPT" "$PROMPT" 2>/dev/null)" || RECOMMENDATION=""
++
++    if [[ -n "$RECOMMENDATION" ]]; then
++        REC_TEMPLATE="$(echo "$RECOMMENDATION" | jq -r '.template // empty')"
++        REC_AGENT="$(echo "$RECOMMENDATION" | jq -r '.agent // empty')"
++        REC_SCORE="$(echo "$RECOMMENDATION" | jq -r '.score // 0')"
++        REC_CONFIDENCE="$(echo "$RECOMMENDATION" | jq -r '.confidence // "none"')"
++        REC_WARNINGS="$(echo "$RECOMMENDATION" | jq -r '.warnings | join("; ") // ""')"
++
++        echo "Auto-select advisory: template=$REC_TEMPLATE agent=$REC_AGENT score=$REC_SCORE confidence=$REC_CONFIDENCE"
++        [[ -n "$REC_WARNINGS" ]] && echo "Auto-select warnings: $REC_WARNINGS"
++
++        # Only apply recommendation if user did NOT pass explicit template
++        if [[ "$TEMPLATE_NAME" == "custom" && -n "$REC_TEMPLATE" && "$REC_TEMPLATE" != "custom" ]]; then
++            echo "Auto-select: using recommended template '$REC_TEMPLATE' (no explicit template provided)"
++            TEMPLATE_NAME="$REC_TEMPLATE"
++        else
++            echo "Auto-select: preserving explicit template '$TEMPLATE_NAME' (advisory only)"
++        fi
++
++        # Advisory: log recommended agent but never override explicit agent type
++        if [[ -n "$REC_AGENT" && "$REC_AGENT" != "unknown" && "$REC_AGENT" != "$AGENT_TYPE" ]]; then
++            echo "Auto-select advisory: recommended agent '$REC_AGENT' differs from explicit '$AGENT_TYPE' — keeping explicit"
++        fi
++    else
++        echo "Auto-select: select-template.sh returned no recommendation"
++    fi
++fi
++
+ AGENT_TYPE="${AGENT_TYPE_RAW%%:*}"
