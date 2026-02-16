@@ -92,7 +92,7 @@ Use accumulated scores to recommend templates and agents for each dispatch.
   - Advisory mode: log recommendation, don't override explicit args
   - Create integration patch file: `scripts/dispatch-integration.patch`
 
-- [ ] **US-204** Validate with 10 test dispatches
+- [x] **US-204** Validate with 10 test dispatches
   - Run select-template.sh against 10 real task descriptions from history
   - Compare recommendations to what was actually used
   - Document accuracy and edge cases
