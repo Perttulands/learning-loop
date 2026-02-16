@@ -44,6 +44,25 @@ learning-loop/
 └── go.mod
 ```
 
+## Scripts
+
+| Script | Cadence | Purpose |
+|--------|---------|---------|
+| `scripts/feedback-collector.sh` | Per-run | Classify outcomes, extract signals, detect failure patterns |
+| `scripts/detect-patterns.sh` | Per-run | Tag failure patterns, update `state/feedback/pattern-registry.json` |
+| `scripts/score-templates.sh` | Hourly (cron) | Aggregate feedback into `state/scores/template-scores.json` and `state/scores/agent-scores.json` |
+| `scripts/select-template.sh` | Per-dispatch | Recommend template + agent based on scores and A/B tests |
+| `scripts/refine-prompts.sh` | Daily (cron) | Generate template variants from failure data |
+| `scripts/ab-tests.sh` | On-demand | A/B test lifecycle: create, pick, record, evaluate |
+| `scripts/guardrails.sh` | Integrated | Safety: variant limits, rollback, loop breaker |
+| `scripts/notify.sh` | Integrated | Alerts via wake-gateway (variant events, regressions, weekly report) |
+| `scripts/manage-patterns.sh` | On-demand | Pattern registry: list, detail, mitigate, effectiveness |
+| `scripts/weekly-strategy.sh` | Weekly (cron) | Cross-cutting strategy report with recommendations |
+| `scripts/backfill.sh` | One-time | Process historical runs through feedback pipeline |
+| `scripts/install-cron.sh` | One-time | Install/remove cron entries from `config/crontab.txt` |
+
+See [docs/flywheel.md](docs/flywheel.md) for architecture details and [docs/templates-guide.md](docs/templates-guide.md) for the variant lifecycle.
+
 ## Goal
 
 Within 50 runs of activation, achieve ≥80% verification-pass rate (up from ~19%).

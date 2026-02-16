@@ -171,7 +171,7 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Track mitigation_effective boolean based on post-mitigation occurrence rate
   - Infra failure isolation: exclude infra patterns from template scoring
 
-- [ ] **US-404** Documentation and integration polish
+- [x] **US-404** Documentation and integration polish
   - Update `docs/flywheel.md` with learning loop architecture
   - Update `docs/templates-guide.md` with variant lifecycle
   - Update `AGENTS.md` with new scripts and workflow
