@@ -177,7 +177,7 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Update `AGENTS.md` with new scripts and workflow
   - Add learning loop section to workspace README
 
-- [ ] **US-405** Retrospective tooling
+- [x] **US-405** Retrospective tooling
   - Script: `scripts/retrospective.sh`
   - Compare pre-loop vs post-loop metrics
   - Generate before/after report on pass rate, template usage, failure patterns

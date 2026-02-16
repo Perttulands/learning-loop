@@ -247,3 +247,41 @@
 - Learnings: Guardrails integrate as lightweight callouts (`"$GUARDRAILS" subcommand` with `|| true` fallback) — keeps existing scripts clean. Archive naming convention matters for rollback (use consistent names like `template.md` in `.archive/`).
 **Summary:** Task: US-402 | Files: [scripts/guardrails.sh, tests/test-guardrails.sh, scripts/refine-prompts.sh, scripts/ab-tests.sh] | Tests: PASS (26/26) | Review: PASSED | Next: US-403
 ---
+
+## Iteration 19 - US-403: Pattern registry management
+- Created `scripts/manage-patterns.sh` (~160 lines): subcommand-based pattern registry management with 4 commands
+- Commands: list (sorted by count desc, infra patterns tagged), detail (full pattern info + infra exclusion note), mitigate (records description + timestamp + count_at_mitigation), effectiveness (post-mitigation occurrence rate from feedback records)
+- Infra pattern isolation: `infra-tmux` and `infra-disk` tagged in list output, detail shows "excluded from template scoring" note
+- Effectiveness tracks mitigation_effective by comparing count_at_mitigation to current count and computing occurrence rate from post-mitigation feedback records
+- Env vars (REGISTRY_FILE, FEEDBACK_DIR) for testability, consistent with all other scripts
+- Created `tests/test-manage-patterns.sh` with 29 assertions covering: existence/executable, usage (4 commands), list (sorted by count, infra tagged), detail (all fields, unknown pattern error, infra exclusion note), mitigate (record/overwrite/count_at_mitigation), effectiveness (no data, with post-mitigation data, unmitigated pattern), empty/missing registry
+- All 431 tests pass across 16 suites (27+38+25+30+19+27+24+19+26+32+45+21+28+37+29+26)
+- Learnings: Effectiveness measurement is cleanest when you snapshot count_at_mitigation at mitigation time, then compare against post-mitigation feedback records occurrence rate.
+**Summary:** Task: US-403 | Files: [scripts/manage-patterns.sh, tests/test-manage-patterns.sh] | Tests: PASS (29/29) | Review: PASSED | Next: US-404
+---
+
+## Iteration 20 - US-404: Documentation and integration polish
+- Created `docs/flywheel.md` (~107 lines): learning loop architecture with four nested loops, template selection, guardrails, notifications, and ASCII data flow diagram
+- Created `docs/templates-guide.md` (~117 lines): variant lifecycle covering scoring, refinement triggers, A/B testing (create/pick/record/evaluate), promotion, discard, guardrails, manual operations
+- Created `AGENTS.md` (~66 lines): agent reference with scripts table, state files, env vars, testing conventions, and reusable patterns
+- Updated `README.md`: added Scripts table with all 12 scripts (cadence + purpose) and links to docs
+- Created `tests/test-documentation.sh` with 36 assertions covering: all 4 files exist, content references (loops, scripts, data flow, variants, A/B, guardrails, env vars, testing)
+- All 467 tests pass across 17 suites (27+38+25+30+19+27+24+19+26+32+45+21+28+37+29+26+36)
+- Learnings: Documentation files benefit from clear scope separation (architecture vs lifecycle vs reference) to avoid content duplication across docs.
+**Summary:** Task: US-404 | Files: [docs/flywheel.md, docs/templates-guide.md, AGENTS.md, README.md, tests/test-documentation.sh] | Tests: PASS (36/36) | Review: PASSED | Next: US-405
+---
+
+## Iteration 21 - US-405: Retrospective tooling
+- Created `scripts/retrospective.sh` (~100 lines): compares pre-loop vs post-loop metrics with a single jq pipeline
+- Splits feedback records by boundary date (explicit `--boundary YYYY-MM-DD` or auto-detected from first non-custom template timestamp)
+- `compute_metrics()` jq function reused for both pre and post: full_pass_rate, partial_pass_rate, retry_rate, timeout_rate, template_usage_rate, outcome_breakdown, top_failure_patterns, per-template breakdown
+- Infra failures excluded from pass rate calculations (consistent with score-templates.sh)
+- Improvement deltas: pass_rate_delta, template_usage_delta, retry_rate_delta
+- Threshold tuning suggestions: auto-generated based on metric changes (refinement trigger, retry penalty, confidence requirements, pattern effectiveness)
+- Report written to `state/reports/retrospective.json` + human-readable summary to stdout
+- Env vars (FEEDBACK_DIR, REPORTS_DIR) consistent with all other scripts
+- Created `tests/test-retrospective.sh` with 28 assertions covering: existence/executable, usage, missing/empty dir, pre/post split with boundary, pass rate/template usage/retry rate metrics, improvement deltas, failure pattern comparison, threshold tuning, auto-detect boundary, schema version, run counts, infra exclusion, outcome breakdown, stdout summary, template breakdown
+- All 495 tests pass across 18 suites (27+38+25+30+19+27+24+19+26+32+45+21+28+37+28)
+- Learnings: jq floating-point arithmetic can produce tiny rounding errors (0.6000000000000001) — use `* N | round / N` for test assertions on float values.
+**Summary:** Task: US-405 | Files: [scripts/retrospective.sh, tests/test-retrospective.sh] | Tests: PASS (28/28) | Review: PASSED | Next: US-REVIEW-S4
+---
