@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# score-templates.sh - Aggregate feedback records into template scores
+# score-templates.sh - Aggregate feedback records into template and agent scores
 # Usage: FEEDBACK_DIR=path SCORES_DIR=path ./scripts/score-templates.sh
 # Env: FEEDBACK_DIR (default: state/feedback/), SCORES_DIR (default: state/scores/)
+# Outputs: template-scores.json + agent-scores.json
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -23,18 +24,22 @@ shopt -s nullglob
 feedback_files=("$FEEDBACK_DIR"/*.json)
 shopt -u nullglob
 if [[ ${#feedback_files[@]} -eq 0 ]]; then
-  # No feedback files - write empty result
-  jq -n --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  # No feedback files - write empty results
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  jq -n --arg ts "$ts" \
     '{schema_version: "1.0.0", generated_at: $ts, templates: []}' \
     > "$SCORES_DIR/template-scores.json"
+  jq -n --arg ts "$ts" \
+    '{schema_version: "1.0.0", generated_at: $ts, agents: []}' \
+    > "$SCORES_DIR/agent-scores.json"
   exit 0
 fi
 
 # Merge all feedback records into one array (filter out non-feedback files like pattern-registry.json)
 all_feedback="$(jq -s '[.[] | select(.bead != null)]' "${feedback_files[@]}")"
 
-# Process with jq: group by template, compute scores
-echo "$all_feedback" | jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
+# Single jq pipeline produces both template-scores and agent-scores
+combined="$(echo "$all_feedback" | jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
 def confidence(n): if n >= 20 then "high" elif n >= 5 then "medium" else "low" end;
 
 def clamp(lo; hi): if . < lo then lo elif . > hi then hi else . end;
@@ -62,9 +67,7 @@ def compute_trend(records):
   (records | length) as $total |
   if $total < 10 then "insufficient_data"
   else
-    # Sort by bead name (alphabetical proxy for chronological)
     (records | sort_by(.bead)) as $sorted |
-    ($sorted | length) as $n |
     ($sorted[-10:]) as $last10 |
     ([$sorted[] | select(.outcome != "infra_failure")] | length) as $all_scoreable |
     ([$last10[] | select(.outcome != "infra_failure")] | length) as $l10_scoreable |
@@ -88,28 +91,73 @@ def agent_breakdown(records):
      full_pass_rate: $scores.full_pass_rate, score: $scores.score}
   ];
 
-# Main pipeline
+def top_patterns(records; n):
+  [records[] | .failure_patterns // [] | .[]] |
+  group_by(.) |
+  [.[] | {pattern: .[0], count: length}] |
+  sort_by(-.count) |
+  .[:n];
+
+def avg_duration(records):
+  [records[] | .signals.duration_ratio // 0] |
+  if length == 0 then 0 else add / length end;
+
 {
-  schema_version: "1.0.0",
-  generated_at: $ts,
-  templates: [
-    group_by(.template)[] |
-    (.[0].template) as $tpl |
-    (. | length) as $total |
-    compute_score(.) as $scores |
-    {
-      template: $tpl,
-      total_runs: $total,
-      scoreable_runs: $scores.scoreable_runs,
-      full_pass_rate: $scores.full_pass_rate,
-      partial_pass_rate: $scores.partial_pass_rate,
-      retry_rate: $scores.retry_rate,
-      timeout_rate: $scores.timeout_rate,
-      score: $scores.score,
-      confidence: confidence($total),
-      trend: compute_trend(.),
-      agents: agent_breakdown(.)
-    }
-  ]
+  template_scores: {
+    schema_version: "1.0.0",
+    generated_at: $ts,
+    templates: [
+      group_by(.template)[] |
+      (.[0].template) as $tpl |
+      (. | length) as $total |
+      compute_score(.) as $scores |
+      {
+        template: $tpl,
+        total_runs: $total,
+        scoreable_runs: $scores.scoreable_runs,
+        full_pass_rate: $scores.full_pass_rate,
+        partial_pass_rate: $scores.partial_pass_rate,
+        retry_rate: $scores.retry_rate,
+        timeout_rate: $scores.timeout_rate,
+        score: $scores.score,
+        confidence: confidence($total),
+        trend: compute_trend(.),
+        agents: agent_breakdown(.)
+      }
+    ]
+  },
+  agent_scores: {
+    schema_version: "1.0.0",
+    generated_at: $ts,
+    agents: [
+      group_by(.agent)[] |
+      (.[0].agent) as $agent_name |
+      (. | length) as $total |
+      compute_score(.) as $scores |
+      {
+        agent: $agent_name,
+        total_runs: $total,
+        pass_rate: $scores.full_pass_rate,
+        score: $scores.score,
+        avg_duration_ratio: avg_duration(.),
+        top_failure_patterns: top_patterns(.; 5),
+        templates: [
+          group_by(.template)[] |
+          (.[0].template) as $tpl |
+          compute_score(.) as $tpl_scores |
+          {
+            template: $tpl,
+            total_runs: length,
+            score: $tpl_scores.score,
+            full_pass_rate: $tpl_scores.full_pass_rate
+          }
+        ]
+      }
+    ]
+  }
 }
-' > "$SCORES_DIR/template-scores.json"
+')"
+
+# Split combined output into two files
+echo "$combined" | jq '.template_scores' > "$SCORES_DIR/template-scores.json"
+echo "$combined" | jq '.agent_scores' > "$SCORES_DIR/agent-scores.json"

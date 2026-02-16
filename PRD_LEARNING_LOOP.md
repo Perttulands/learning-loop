@@ -80,7 +80,7 @@ Use accumulated scores to recommend templates and agents for each dispatch.
   - Score lookup with confidence gating (require ≥ medium)
   - Agent recommendation: pick agent with highest full_pass_rate (min 3 runs)
 
-- [ ] **US-202** Build agent-scores.json aggregation
+- [x] **US-202** Build agent-scores.json aggregation
   - Extend score-templates.sh to also produce `state/scores/agent-scores.json`
   - Per-agent global stats: total runs, pass rate, avg duration, top failure patterns
   - Per-agent per-template breakdown
