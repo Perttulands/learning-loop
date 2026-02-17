@@ -210,5 +210,5 @@ The flywheel runs unattended with safety guardrails, notifications, and document
 - `prompt-optimizer` skill (working)
 - `analyze-runs.sh` (working)
 - `wake-gateway.sh` (working)
-- `br` / beads (working)
+- `bd` / beads (working)
 - Cron (available)
