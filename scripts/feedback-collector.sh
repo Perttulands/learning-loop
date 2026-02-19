@@ -2,7 +2,10 @@
 # feedback-collector.sh - Extract feedback record from a run record
 # Usage: ./scripts/feedback-collector.sh <run-record.json>
 # Output: state/feedback/<bead>.json
-# Env: FEEDBACK_DIR overrides output directory (default: state/feedback/)
+# Env:
+#   FEEDBACK_DIR overrides output directory
+#   REGISTRY_FILE overrides pattern registry path
+#   WORKSPACE_ROOT defaults outputs to $WORKSPACE_ROOT/state/feedback
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -13,14 +16,41 @@ if [[ $# -lt 1 ]]; then
   exit 1
 fi
 
-RUN_FILE="$1"
+RUN_FILE_INPUT="$1"
 
-if [[ ! -f "$RUN_FILE" ]]; then
-  echo "Error: file not found: $RUN_FILE" >&2
+resolve_run_file() {
+  local input="$1"
+  if [[ -f "$input" ]]; then
+    echo "$input"
+    return 0
+  fi
+
+  if [[ "$input" != /* ]]; then
+    if [[ -n "${WORKSPACE_ROOT:-}" && -f "$WORKSPACE_ROOT/$input" ]]; then
+      echo "$WORKSPACE_ROOT/$input"
+      return 0
+    fi
+    if [[ -f "$PROJECT_DIR/$input" ]]; then
+      echo "$PROJECT_DIR/$input"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+if ! RUN_FILE="$(resolve_run_file "$RUN_FILE_INPUT")"; then
+  echo "Error: file not found: $RUN_FILE_INPUT" >&2
   exit 1
 fi
 
-FEEDBACK_DIR="${FEEDBACK_DIR:-$PROJECT_DIR/state/feedback}"
+default_feedback_dir="$PROJECT_DIR/state/feedback"
+if [[ -n "${WORKSPACE_ROOT:-}" ]]; then
+  default_feedback_dir="$WORKSPACE_ROOT/state/feedback"
+fi
+
+FEEDBACK_DIR="${FEEDBACK_DIR:-$default_feedback_dir}"
+REGISTRY_FILE="${REGISTRY_FILE:-$FEEDBACK_DIR/pattern-registry.json}"
 mkdir -p "$FEEDBACK_DIR"
 
 # Skip runs that are still in progress
@@ -31,6 +61,10 @@ fi
 
 # Read run record fields
 bead="$(jq -r '.bead' "$RUN_FILE")"
+if [[ -z "$bead" || "$bead" == "null" ]]; then
+  echo "Error: missing bead in run record: $RUN_FILE" >&2
+  exit 1
+fi
 agent="$(jq -r '.agent // "unknown"' "$RUN_FILE")"
 model="$(jq -r '.model // "unknown"' "$RUN_FILE")"
 template="$(jq -r '.template_name // "custom"' "$RUN_FILE")"
@@ -110,7 +144,7 @@ outcome="$(classify_outcome)"
 timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 # Detect failure patterns
-failure_patterns="$("$SCRIPT_DIR/detect-patterns.sh" --update-registry "$RUN_FILE")"
+failure_patterns="$(REGISTRY_FILE="$REGISTRY_FILE" "$SCRIPT_DIR/detect-patterns.sh" --update-registry "$RUN_FILE")"
 
 # Build feedback JSON
 jq -n \

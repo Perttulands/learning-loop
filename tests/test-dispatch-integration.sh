@@ -64,6 +64,10 @@ assert_contains "patch adds --auto-select flag" "--auto-select" "$patch_content"
 assert_contains "patch references select-template.sh" "select-template" "$patch_content"
 assert_contains "patch includes advisory logging" "advisory" "$patch_content"
 assert_contains "patch preserves explicit args" "explicit" "$patch_content"
+assert_contains "patch references feedback-collector.sh" "feedback-collector.sh" "$patch_content"
+assert_contains "patch passes run record path" 'state/runs/$BEAD_ID.json' "$patch_content"
+non_blocking_marker='|| true' # REASON: literal marker assertion for non-blocking hook in patch content.
+assert_contains "patch keeps feedback hook non-blocking" "$non_blocking_marker" "$patch_content"
 
 # ── Test: select-template.sh advisory integration ────────────────────────────
 # We test the advisory logic by simulating what the patch does:

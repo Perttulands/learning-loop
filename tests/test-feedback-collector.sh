@@ -206,6 +206,33 @@ cat > "$TMPDIR/run-running.json" <<'EOF'
 }
 EOF
 
+# Dispatch integration fixture (relative state/runs path)
+cat > "$TMPDIR/run-dispatch-hook.json" <<'EOF'
+{
+  "schema_version": 1,
+  "bead": "athena-7b9",
+  "agent": "codex",
+  "model": "gpt-5.3-codex",
+  "prompt": "hook test",
+  "prompt_hash": "hook123",
+  "started_at": "2026-02-13T10:00:00Z",
+  "finished_at": "2026-02-13T10:02:00Z",
+  "duration_seconds": 120,
+  "status": "done",
+  "attempt": 1,
+  "exit_code": 0,
+  "failure_reason": null,
+  "template_name": "custom",
+  "verification": {
+    "lint": "pass",
+    "tests": "pass",
+    "ubs": "clean",
+    "truthsayer": "pass",
+    "lint_details": null
+  }
+}
+EOF
+
 # Set output dir
 export FEEDBACK_DIR="$TMPDIR/feedback"
 mkdir -p "$FEEDBACK_DIR"
@@ -325,13 +352,14 @@ assert_eq "timestamp is string" "true" \
 # === Test 12: Output is valid JSON ===
 echo ""
 echo "=== Test: Valid JSON output ==="
+jq_err_file="$TMPDIR/jq-errors.log"
 for f in "$FEEDBACK_DIR"/*.json; do
   name="$(basename "$f")"
-  if jq empty "$f" 2>/dev/null; then
+  if jq empty "$f" > "$jq_err_file" 2>&1; then
     echo "  PASS: $name is valid JSON"
     PASS=$((PASS + 1))
   else
-    echo "  FAIL: $name is not valid JSON"
+    echo "  FAIL: $name is not valid JSON: $(cat "$jq_err_file")"
     FAIL=$((FAIL + 1))
   fi
 done
@@ -339,9 +367,33 @@ done
 # === Test 13: No args prints usage ===
 echo ""
 echo "=== Test: Usage message ==="
-usage_output="$("$COLLECTOR" 2>&1 || true)"
+set +e
+usage_output="$("$COLLECTOR" 2>&1)"
+usage_status=$?
+set -e
+assert_eq "no args exits non-zero" "true" \
+  "$([[ $usage_status -ne 0 ]] && echo true || echo false)"
 assert_eq "no args shows usage" "true" \
   "$(echo "$usage_output" | grep -qi 'usage' && echo true || echo false)"
+
+# === Test 14: Dispatch integration path + workspace defaults ===
+echo ""
+echo "=== Test: Dispatch integration path ==="
+WORKSPACE_ROOT="$TMPDIR/workspace"
+mkdir -p "$WORKSPACE_ROOT/state/runs"
+cp "$TMPDIR/run-dispatch-hook.json" "$WORKSPACE_ROOT/state/runs/athena-7b9.json"
+
+(
+  unset FEEDBACK_DIR REGISTRY_FILE
+  export WORKSPACE_ROOT
+  cd "$WORKSPACE_ROOT"
+  "$COLLECTOR" "state/runs/athena-7b9.json"
+)
+
+assert_eq "dispatch run output written to workspace feedback dir" "true" \
+  "$([ -f "$WORKSPACE_ROOT/state/feedback/athena-7b9.json" ] && echo true || echo false)"
+assert_eq "dispatch run outcome full_pass" "full_pass" \
+  "$(jq -r '.outcome' "$WORKSPACE_ROOT/state/feedback/athena-7b9.json")"
 
 echo ""
 echo "=== Results ==="

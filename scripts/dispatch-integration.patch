@@ -32,7 +32,7 @@
 +#   - If user explicitly passed an agent type, preserve it
 +#   - Log the recommendation for observability regardless
 +
-+LEARNING_LOOP_DIR="${LEARNING_LOOP_DIR:-$(cd "$SCRIPT_DIR/../../learning-loop" && pwd)}"
++LEARNING_LOOP_DIR="${LEARNING_LOOP_DIR:-$WORKSPACE_ROOT/tools/learning-loop}"
 +SELECT_SCRIPT="$LEARNING_LOOP_DIR/scripts/select-template.sh"
 +
 +if [[ "$AUTO_SELECT" == "true" && -x "$SELECT_SCRIPT" ]]; then
@@ -66,3 +66,18 @@
 +fi
 +
  AGENT_TYPE="${AGENT_TYPE_RAW%%:*}"
+@@ -301,6 +340,17 @@ complete_run() {
+     write_run_record "$status" "$finished_at" "$duration" "$exit_code" "$output_summary" "$failure_reason" "$verification_json"
+     write_result_record "$status" "$reason" "$finished_at" "$duration" "$exit_code" "$will_retry" "$output_summary" "$verification_json"
+ 
++    # Learning Loop feedback hook (non-blocking)
++    local learning_loop_dir feedback_collector
++    learning_loop_dir="${LEARNING_LOOP_DIR:-$WORKSPACE_ROOT/tools/learning-loop}"
++    feedback_collector="$learning_loop_dir/scripts/feedback-collector.sh"
++    if [[ -x "$feedback_collector" ]]; then
++        (cd "$WORKSPACE_ROOT" && WORKSPACE_ROOT="$WORKSPACE_ROOT" "$feedback_collector" "state/runs/$BEAD_ID.json") || true
++    fi
++
+     # Advisory validation
+     if [[ -x "$WORKSPACE_ROOT/scripts/validate-state.sh" ]]; then
+         "$WORKSPACE_ROOT/scripts/validate-state.sh" --runs "$RUN_RECORD" --results "$RESULT_RECORD" 2>/dev/null || true
