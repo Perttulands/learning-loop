@@ -64,6 +64,23 @@ learning-loop/
 
 See [docs/flywheel.md](docs/flywheel.md) for architecture details and [docs/templates-guide.md](docs/templates-guide.md) for the variant lifecycle.
 
+## Dispatch Integration
+
+Learning Loop is designed to be called from `dispatch.sh` immediately after agent completion (after run/result records are written):
+
+```bash
+(cd "$WORKSPACE_ROOT" && WORKSPACE_ROOT="$WORKSPACE_ROOT" \
+  "$WORKSPACE_ROOT/tools/learning-loop/scripts/feedback-collector.sh" \
+  "state/runs/$BEAD_ID.json") || true
+```
+
+- Input passed by dispatch: `state/runs/<bead>.json`
+- `feedback-collector.sh` resolves this relative path and writes feedback to:
+  - `$FEEDBACK_DIR` (if set), otherwise
+  - `$WORKSPACE_ROOT/state/feedback` (when `WORKSPACE_ROOT` is set), otherwise
+  - `learning-loop/state/feedback`
+- Hook is intentionally non-blocking (`|| true`) so dispatch completion is never blocked by feedback processing.
+
 ## Goal
 
 Within 50 runs of activation, achieve ≥80% verification-pass rate (up from ~19%).
