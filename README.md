@@ -71,3 +71,14 @@ Within 50 runs of activation, achieve ≥80% verification-pass rate (up from ~19
 ## Status
 
 See [PRD_LEARNING_LOOP.md](PRD_LEARNING_LOOP.md) for sprint breakdown and task tracking.
+
+## Dependencies
+
+### Beads (bd CLI)
+
+Learning Loop integrates with beads for tracking feedback items and improvement tasks.
+
+- Required version: **0.46.0**
+- Fork: [Perttulands/beads](https://github.com/Perttulands/beads) (branch `v0.46.0-stable`)
+- Install: `go install github.com/Perttulands/beads/cmd/bd@v0.46.0`
+- Verify: `bd --version` should show `bd version 0.46.0`
