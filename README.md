@@ -25,6 +25,12 @@ Four nested feedback loops at different cadences:
 | **Prompt Refinement** | Daily | `refine-prompts.sh` | Auto-generate improved template variants via A/B testing |
 | **Strategy Evolution** | Weekly | `weekly-strategy.sh` | Cross-template learnings and system-level recommendations |
 
+Loop script quick reference:
+- `feedback-collector.sh`
+- `score-templates.sh`
+- `refine-prompts.sh`
+- `weekly-strategy.sh`
+
 ## Quality Signals
 
 Feedback records include optional qualitative fields for Opus-based judging:
