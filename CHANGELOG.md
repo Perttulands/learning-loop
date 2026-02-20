@@ -18,3 +18,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-007 (`athena-bc8`): added `tests/test-weekly-strategy-metrics.sh` to validate new weekly report metrics calculations and highlight generation.
 - LL-008 (`athena-bt3`): wired `refine-prompts.sh --auto` to create an A/B test automatically for each new variant (default target: 10 runs, idempotent by original+variant pair).
 - LL-008 (`athena-bt3`): added `tests/test-refine-auto-ab.sh` to verify variant generation and automatic A/B test creation behavior.
+- LL-009 (`athena-5bw`): extended dispatch integration patch to record A/B test runs via `ab-tests.sh record`, including variant-to-original normalization.
+- LL-009 (`athena-5bw`): expanded dispatch integration tests to assert A/B tracking hooks and variant side detection logic.

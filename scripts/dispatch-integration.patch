@@ -75,7 +75,7 @@
 +fi
 +
  AGENT_TYPE="${AGENT_TYPE_RAW%%:*}"
-@@ -301,6 +352,17 @@ complete_run() {
+@@ -301,6 +352,30 @@ complete_run() {
      write_run_record "$status" "$finished_at" "$duration" "$exit_code" "$output_summary" "$failure_reason" "$verification_json"
      write_result_record "$status" "$reason" "$finished_at" "$duration" "$exit_code" "$will_retry" "$output_summary" "$verification_json"
  
@@ -85,6 +85,19 @@
 +    feedback_collector="$learning_loop_dir/scripts/feedback-collector.sh"
 +    if [[ -x "$feedback_collector" ]]; then
 +        (cd "$WORKSPACE_ROOT" && WORKSPACE_ROOT="$WORKSPACE_ROOT" "$feedback_collector" "state/runs/$BEAD_ID.json") || true
++    fi
++
++    # Learning Loop A/B tracking hook (non-blocking)
++    local ab_script ab_template ab_side
++    ab_script="$learning_loop_dir/scripts/ab-tests.sh"
++    if [[ -x "$ab_script" ]]; then
++        ab_template="$TEMPLATE_NAME"
++        ab_side="original"
++        if [[ "$TEMPLATE_NAME" =~ ^(.+)-v[0-9]+$ ]]; then
++            ab_template="${BASH_REMATCH[1]}"
++            ab_side="variant"
++        fi
++        AB_TESTS_FILE="${AB_TESTS_FILE:-$learning_loop_dir/state/scores/ab-tests.json}" "$ab_script" record "$ab_template" "$ab_side" >/dev/null 2>&1 || true
 +    fi
 +
      # Advisory validation

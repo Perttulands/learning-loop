@@ -69,6 +69,9 @@ assert_contains "patch logs recommendation reasoning" "Auto-select reasoning" "$
 assert_contains "patch guards invalid JSON recommendation" "no valid recommendation" "$patch_content"
 assert_contains "patch references feedback-collector.sh" "feedback-collector.sh" "$patch_content"
 assert_contains "patch passes run record path" 'state/runs/$BEAD_ID.json' "$patch_content"
+assert_contains "patch references ab-tests.sh for tracking" "ab-tests.sh" "$patch_content"
+assert_contains "patch records ab test side" 'record "$ab_template" "$ab_side"' "$patch_content"
+assert_contains "patch detects variant template names" 'TEMPLATE_NAME" =~ ^(.+)-v[0-9]+$' "$patch_content"
 non_blocking_marker='|| true' # REASON: literal marker assertion for non-blocking hook in patch content.
 assert_contains "patch keeps feedback hook non-blocking" "$non_blocking_marker" "$patch_content"
 
