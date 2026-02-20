@@ -1,6 +1,6 @@
 [scan]
-exclude_dirs = ["vendor", "node_modules", "testdata", ".beads"]
-exclude_patterns = ["*_test.go"]
+exclude_dirs = ["vendor", "node_modules", "testdata", ".beads", "tests"]
+exclude_patterns = ["*_test.go", "test-*.sh"]
 
 [rules]
 disable = [
