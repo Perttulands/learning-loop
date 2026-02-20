@@ -86,6 +86,35 @@ def agent_comparison:
      top_pattern: (if (.top_failure_patterns | length) > 0 then .top_failure_patterns[0].pattern else null end)}
   ] | sort_by(-.score);
 
+# Agent-specific recommendations using per-template performance deltas
+def agent_recommendations:
+  [$agents.agents[] |
+    (.templates // []) as $templates |
+    if ($templates | length) == 0 then
+      {
+        agent: .agent,
+        recommendation: (.agent + " has insufficient per-template data for targeted recommendations."),
+        strengths: [],
+        weaknesses: []
+      }
+    else
+      ($templates | sort_by(-.score) | .[:2]) as $best |
+      ($templates | sort_by(.score) | .[:2]) as $worst |
+      {
+        agent: .agent,
+        strengths: [$best[] | {template, score, full_pass_rate}],
+        weaknesses: [$worst[] | {template, score, full_pass_rate}],
+        recommendation:
+          (if (($best[0].score // 0) - ($worst[0].score // 0)) >= 0.1 then
+             .agent + " excels on " + ($best[0].template // "unknown") +
+             " and should prioritize coaching on " + ($worst[0].template // "unknown") + "."
+           else
+             .agent + " is consistent across templates; focus on global quality improvements."
+           end)
+      }
+    end
+  ];
+
 # Top 3 failure patterns from registry
 def top_patterns:
   [$registry | to_entries[] | {pattern: .key, count: .value.count, last_seen: .value.last_seen}]
@@ -174,6 +203,7 @@ def summary_text:
   week_ending: $week,
   template_trends: template_trends,
   agent_comparison: agent_comparison,
+  agent_recommendations: agent_recommendations,
   top_failure_patterns: top_patterns,
   ab_results: ab_results,
   refinement_activity: refinement_activity,

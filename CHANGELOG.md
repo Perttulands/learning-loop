@@ -28,3 +28,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-012 (`athena-bnw`): extended feedback collector tests with mock judge coverage for sampled and non-sampled paths.
 - LL-013 (`athena-2kq`): updated weekly strategy cron scheduling to Sunday 07:00 UTC in `config/crontab.txt`.
 - LL-013 (`athena-2kq`): updated cron installer tests to validate the new weekly schedule.
+- LL-014 (`athena-r3b`): added `agent_recommendations` to weekly strategy reports with per-agent strengths, weaknesses, and targeted recommendation text.
+- LL-014 (`athena-r3b`): added `tests/test-weekly-agent-recommendations.sh` to validate recommendation generation from per-template agent scores.
