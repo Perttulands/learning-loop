@@ -71,6 +71,7 @@ learning-loop/
 | `scripts/refine-prompts.sh` | Daily (cron) | Generate template variants from failure data and auto-create A/B tests |
 | `scripts/ab-tests.sh` | On-demand | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Integrated | Safety: variant limits, rollback, loop breaker |
+| `scripts/guardrail-audit.sh` | On-demand | Run guardrail audit and write `state/reports/guardrail-audit-*.json` |
 | `scripts/notify.sh` | Integrated | Alerts via wake-gateway (variant events, regressions, weekly report) |
 | `scripts/manage-patterns.sh` | On-demand | Pattern registry: list, detail, mitigate, effectiveness |
 | `scripts/weekly-strategy.sh` | Weekly (cron) | Cross-cutting strategy report with recommendations |

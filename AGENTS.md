@@ -16,6 +16,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/refine-prompts.sh` | Generate improved template variants from failure data and auto-create A/B tests |
 | `scripts/ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Safety limits: variant caps, rollback, loop breaker |
+| `scripts/guardrail-audit.sh` | Guardrail smoke audit with JSON report output |
 | `scripts/notify.sh` | Send notifications via wake-gateway |
 | `scripts/manage-patterns.sh` | Pattern registry: list, detail, mitigate, effectiveness |
 | `scripts/weekly-strategy.sh` | Weekly cross-cutting strategy report |

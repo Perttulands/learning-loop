@@ -34,3 +34,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-015 (`athena-3bh`): added `tests/test-task-classification.sh` with 58 labeled prompts and enforced >=90% classification accuracy.
 - LL-016 (`athena-esi`): added `scripts/dashboard.sh` to generate `state/reports/dashboard.html` with template/agent scores, A/B status, and weekly recommendations.
 - LL-016 (`athena-esi`): scheduled dashboard generation in cron and added `tests/test-dashboard.sh` coverage for dashboard output.
+- LL-017 (`athena-059`): added `scripts/guardrail-audit.sh` to run guardrail smoke checks and emit `guardrail-audit-*.json` reports.
+- LL-017 (`athena-059`): added `tests/test-guardrail-audit.sh` and documented guardrail audit tooling in AGENTS/README.
