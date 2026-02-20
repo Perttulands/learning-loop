@@ -20,3 +20,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-008 (`athena-bt3`): added `tests/test-refine-auto-ab.sh` to verify variant generation and automatic A/B test creation behavior.
 - LL-009 (`athena-5bw`): extended dispatch integration patch to record A/B test runs via `ab-tests.sh record`, including variant-to-original normalization.
 - LL-009 (`athena-5bw`): expanded dispatch integration tests to assert A/B tracking hooks and variant side detection logic.
+- LL-010 (`athena-qkp`): added formal Opus judge interface spec (`docs/opus-judge-spec.md`) with invocation contract, schema mapping, failure modes, and example output.
+- LL-010 (`athena-qkp`): added judge input/output schema files and validation test coverage (`tests/test-opus-judge-spec.sh`).

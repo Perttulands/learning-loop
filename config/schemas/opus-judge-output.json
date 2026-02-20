@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Output contract for scripts/opus-judge.sh",
+  "fields": {
+    "schema_version": {"type": "string", "required": true},
+    "bead": {"type": "string", "required": true},
+    "judged_at": {"type": "string", "format": "iso8601", "required": true},
+    "judge_model": {"type": "string", "required": true},
+    "quality_score": {"type": "number", "range": [0, 1], "required": true},
+    "style_rating": {"type": "number", "range": [1, 5], "required": true},
+    "maintainability_rating": {"type": "number", "range": [1, 5], "required": true},
+    "correctness_rating": {"type": "number", "range": [1, 5], "required": true},
+    "confidence": {"type": "string", "enum": ["high", "medium", "low"], "required": true},
+    "verdict": {"type": "string", "enum": ["pass", "partial", "fail"], "required": true},
+    "critique": {"type": "string", "required": true},
+    "findings": {
+      "type": "array",
+      "required": true,
+      "items": {
+        "type": "object",
+        "fields": {
+          "severity": {"type": "string", "enum": ["major", "minor"], "required": true},
+          "title": {"type": "string", "required": true},
+          "details": {"type": "string", "required": false}
+        }
+      }
+    },
+    "input_summary": {
+      "type": "object",
+      "required": false,
+      "fields": {
+        "diff_lines": {"type": "number", "required": false},
+        "tests_status": {"type": "string", "required": false},
+        "lint_status": {"type": "string", "required": false}
+      }
+    }
+  }
+}

@@ -71,7 +71,7 @@ learning-loop/
 | `scripts/backfill.sh` | One-time | Process historical runs through feedback pipeline |
 | `scripts/install-cron.sh` | One-time | Install/remove cron entries from `config/crontab.txt` |
 
-See [docs/flywheel.md](docs/flywheel.md) for architecture details and [docs/templates-guide.md](docs/templates-guide.md) for the variant lifecycle.
+See [docs/flywheel.md](docs/flywheel.md) for architecture details, [docs/templates-guide.md](docs/templates-guide.md) for the variant lifecycle, and [docs/opus-judge-spec.md](docs/opus-judge-spec.md) for the Opus judge interface contract.
 
 ## Dispatch Integration
 
