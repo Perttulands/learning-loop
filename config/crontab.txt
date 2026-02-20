@@ -5,6 +5,9 @@
 # Hourly: refresh template and agent scores
 0 * * * * . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/score-templates.sh >> __PROJECT_DIR__/state/logs/score-templates.log 2>&1
 
+# Hourly: refresh static dashboard after score refresh
+15 * * * * . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/dashboard.sh >> __PROJECT_DIR__/state/logs/dashboard.log 2>&1
+
 # Daily 03:00 UTC: auto-refine underperforming templates
 0 3 * * * . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/refine-prompts.sh --auto >> __PROJECT_DIR__/state/logs/refine-prompts.log 2>&1
 

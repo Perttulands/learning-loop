@@ -19,6 +19,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/notify.sh` | Send notifications via wake-gateway |
 | `scripts/manage-patterns.sh` | Pattern registry: list, detail, mitigate, effectiveness |
 | `scripts/weekly-strategy.sh` | Weekly cross-cutting strategy report |
+| `scripts/dashboard.sh` | Generate static HTML dashboard from current learning-loop state |
 | `scripts/backfill.sh` | Process historical runs through the feedback pipeline |
 | `scripts/install-cron.sh` | Install/remove cron entries for scheduled execution |
 | `scripts/retrospective.sh` | Compare pre-loop vs post-loop metrics, suggest threshold tuning |

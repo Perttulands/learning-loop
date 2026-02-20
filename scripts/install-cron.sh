@@ -48,8 +48,8 @@ if $REMOVE; then
     exit 0
   fi
   # Remove lines with our marker from current crontab
-  existing="$(crontab -l 2>/dev/null || true)"
-  filtered="$(echo "$existing" | grep -v "$MARKER" || true)"
+  existing="$(crontab -l 2>/dev/null || true)" # REASON: Missing crontab is expected on first install/remove cycle.
+  filtered="$(echo "$existing" | grep -v "$MARKER" || true)" # REASON: grep returns non-zero when there are no matching marker lines.
   echo "$filtered" | crontab -
   echo "Removed learning-loop cron entries"
   exit 0
@@ -66,8 +66,8 @@ fi
 
 # Merge: keep existing non-learning-loop entries, add ours
 mkdir -p "$PROJECT_DIR/state/logs"
-existing="$(crontab -l 2>/dev/null || true)"
-filtered="$(echo "$existing" | grep -v "$MARKER" || true)"
+existing="$(crontab -l 2>/dev/null || true)" # REASON: Missing crontab is expected on first install.
+filtered="$(echo "$existing" | grep -v "$MARKER" || true)" # REASON: grep returns non-zero when marker lines are absent.
 
 {
   echo "$filtered"
@@ -75,4 +75,4 @@ filtered="$(echo "$existing" | grep -v "$MARKER" || true)"
   echo "$entries"
 } | crontab -
 
-echo "Installed learning-loop cron jobs (3 entries)"
+echo "Installed learning-loop cron jobs (4 entries)"

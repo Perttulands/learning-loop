@@ -74,6 +74,7 @@ learning-loop/
 | `scripts/notify.sh` | Integrated | Alerts via wake-gateway (variant events, regressions, weekly report) |
 | `scripts/manage-patterns.sh` | On-demand | Pattern registry: list, detail, mitigate, effectiveness |
 | `scripts/weekly-strategy.sh` | Weekly (cron) | Cross-cutting strategy report with recommendations |
+| `scripts/dashboard.sh` | Hourly (cron) | Generate static HTML dashboard with scores, A/B tests, and recommendations |
 | `scripts/retrospective.sh` | On-demand | Compare pre-loop vs post-loop metrics, threshold tuning |
 | `scripts/backfill.sh` | One-time | Process historical runs through feedback pipeline |
 | `scripts/install-cron.sh` | One-time | Install/remove cron entries from `config/crontab.txt` |

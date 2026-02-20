@@ -32,3 +32,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-014 (`athena-r3b`): added `tests/test-weekly-agent-recommendations.sh` to validate recommendation generation from per-template agent scores.
 - LL-015 (`athena-3bh`): replaced keyword-only task classification with weighted structure-aware pattern scoring in `select-template.sh`.
 - LL-015 (`athena-3bh`): added `tests/test-task-classification.sh` with 58 labeled prompts and enforced >=90% classification accuracy.
+- LL-016 (`athena-esi`): added `scripts/dashboard.sh` to generate `state/reports/dashboard.html` with template/agent scores, A/B status, and weekly recommendations.
+- LL-016 (`athena-esi`): scheduled dashboard generation in cron and added `tests/test-dashboard.sh` coverage for dashboard output.

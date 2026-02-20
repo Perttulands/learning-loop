@@ -36,6 +36,10 @@ crontab_content="$(cat "$CRONTAB_FILE")"
 assert "crontab has hourly score-templates entry" '[[ "$crontab_content" == *"score-templates.sh"* ]]'
 assert "score-templates runs hourly" 'echo "$crontab_content" | grep -q "score-templates" && echo "$crontab_content" | grep "score-templates" | grep -qE "^[0-9]+ \* \* \* \*"'
 
+# Hourly: dashboard.sh
+assert "crontab has hourly dashboard entry" '[[ "$crontab_content" == *"dashboard.sh"* ]]'
+assert "dashboard runs hourly at :15" 'echo "$crontab_content" | grep -q "dashboard.sh" && echo "$crontab_content" | grep "dashboard.sh" | grep -qE "^15 \* \* \* \*"'
+
 # Daily 03:00 UTC: refine-prompts.sh --auto
 assert "crontab has daily refine-prompts entry" '[[ "$crontab_content" == *"refine-prompts.sh"* ]]'
 assert "refine-prompts has --auto flag" '[[ "$crontab_content" == *"refine-prompts.sh --auto"* ]]'
@@ -64,7 +68,7 @@ assert "shows usage with --help" '[[ "$output" == *"Usage"* || "$output" == *"us
 # --dry-run mode (does not modify actual crontab)
 output="$("$INSTALL_CRON" --dry-run 2>&1)"
 assert "dry-run shows crontab entries" '[[ "$output" == *"score-templates"* ]]'
-assert "dry-run shows all 3 jobs" '[[ "$output" == *"refine-prompts"* && "$output" == *"weekly-strategy"* ]]'
+assert "dry-run shows all scheduled jobs" '[[ "$output" == *"dashboard.sh"* && "$output" == *"refine-prompts"* && "$output" == *"weekly-strategy"* ]]'
 assert "dry-run does not install" '[[ "$output" == *"dry"* || "$output" == *"preview"* || "$output" == *"would"* ]]'
 
 # --remove mode (dry)
@@ -93,7 +97,7 @@ while IFS= read -r line; do
     valid_lines=$((valid_lines + 1))
   fi
 done < "$CRONTAB_FILE"
-assert "crontab has exactly 3 cron entries" '[[ "$valid_lines" -eq 3 ]]'
+assert "crontab has exactly 4 cron entries" '[[ "$valid_lines" -eq 4 ]]'
 
 # --- Results ---
 echo ""
