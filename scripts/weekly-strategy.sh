@@ -108,6 +108,23 @@ def refinement_activity:
     timestamp
   }];
 
+# System-level metrics for weekly snapshots
+def metrics:
+  ($templates.templates // []) as $t |
+  {
+    total_templates: ($t | length),
+    total_runs: ([$t[].total_runs] | add // 0),
+    scoreable_runs: ([$t[].scoreable_runs] | add // 0),
+    avg_template_score: ([$t[].score] | if length > 0 then add / length else 0 end),
+    overall_full_pass_rate:
+      (if ([$t[].scoreable_runs] | add // 0) > 0 then
+         (([$t[] | (.full_pass_rate * .scoreable_runs)] | add // 0) / ([$t[].scoreable_runs] | add))
+       else 0 end),
+    active_ab_tests: ([($ab.tests // [])[] | select(.status == "active")] | length),
+    completed_ab_tests: ([($ab.tests // [])[] | select(.status == "completed")] | length),
+    refinements_logged: ([($refinements.entries // [])[] | select(.trigger != null)] | length)
+  };
+
 # Generate recommendations based on data
 def recommendations:
   [
@@ -132,6 +149,16 @@ def recommendations:
       else empty end)
   ];
 
+# Short highlight list for human scanability
+def highlights:
+  (metrics) as $m |
+  [
+    "Templates tracked: " + ($m.total_templates | tostring) + ", total runs: " + ($m.total_runs | tostring),
+    "Overall full-pass rate: " + (($m.overall_full_pass_rate * 100 | round) | tostring) + "%",
+    "Average template score: " + (($m.avg_template_score * 100 | round / 100) | tostring),
+    "A/B tests: " + ($m.active_ab_tests | tostring) + " active, " + ($m.completed_ab_tests | tostring) + " completed"
+  ];
+
 # Human-readable summary
 def summary_text:
   ($templates.templates | length) as $tpl_count |
@@ -150,6 +177,8 @@ def summary_text:
   top_failure_patterns: top_patterns,
   ab_results: ab_results,
   refinement_activity: refinement_activity,
+  metrics: metrics,
+  highlights: highlights,
   recommendations: recommendations,
   summary: summary_text
 }
@@ -164,4 +193,4 @@ echo "$summary"
 echo "Report written to: $report_file"
 
 # Notify: weekly report
-"$SCRIPT_DIR/notify.sh" weekly-report --summary "$summary" 2>/dev/null || true
+"$SCRIPT_DIR/notify.sh" weekly-report --summary "$summary" 2>/dev/null || true # REASON: Weekly reporting should not fail if notifications are unavailable.

@@ -14,3 +14,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-005 (`athena-yhs`): updated schema and collector tests to validate new Opus quality fields and null-by-default behavior.
 - LL-006 (`athena-77y`): enabled human-gated refinement promotions by default (`NO_AUTO_PROMOTE=true`) with queued review entries and explicit approval flow in `ab-tests.sh`.
 - LL-006 (`athena-77y`): added promotion review queue state (`state/scores/promotion-review-queue.json`) and extended A/B lifecycle tests for gated and approved promotions.
+- LL-007 (`athena-bc8`): expanded weekly strategy reports with `metrics` and `highlights` sections for system-level run, score, A/B, and refinement visibility.
+- LL-007 (`athena-bc8`): added `tests/test-weekly-strategy-metrics.sh` to validate new weekly report metrics calculations and highlight generation.
