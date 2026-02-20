@@ -113,7 +113,10 @@ cmd_check_rollback() {
 
   # Find promoted templates from refinement log
   local promoted
-  promoted="$(jq -r '[.entries[] | select(.type == "ab_test_result" and .decision == "promoted")] | .[] | .original' "$REFINEMENT_LOG" 2>/dev/null || true)"
+  promoted="$(jq -r '[.entries[] | select(.type == "ab_test_result" and .decision == "promoted")] | .[] | .original' "$REFINEMENT_LOG")" || {
+    echo "Warning: failed to parse refinement log — rollback check skipped" >&2
+    return
+  }
 
   if [[ -z "$promoted" ]]; then
     echo "No promoted templates to check."
@@ -156,7 +159,10 @@ cmd_auto_rollback() {
   fi
 
   local promoted
-  promoted="$(jq -r '[.entries[] | select(.type == "ab_test_result" and .decision == "promoted")] | .[] | .original' "$REFINEMENT_LOG" 2>/dev/null || true)"
+  promoted="$(jq -r '[.entries[] | select(.type == "ab_test_result" and .decision == "promoted")] | .[] | .original' "$REFINEMENT_LOG")" || {
+    echo "Warning: failed to parse refinement log — auto-rollback skipped" >&2
+    return
+  }
 
   for template in $promoted; do
     local orig_score current_score current_runs
@@ -190,14 +196,14 @@ cmd_auto_rollback() {
 
         # Notify
         "$SCRIPT_DIR/notify.sh" score-regression \
-          --template "$template" --old-score "$orig_score" --new-score "$current_score" 2>/dev/null || true
+          --template "$template" --old-score "$orig_score" --new-score "$current_score" 2>/dev/null || true # REASON: Notification failures must not block safety-critical rollback operations.
       elif [[ -f "$TEMPLATES_DIR/.archive/${template}.md" ]]; then
         # Fallback: try the plain archived original
         cp "$TEMPLATES_DIR/.archive/${template}.md" "$TEMPLATES_DIR/${template}.md"
         echo "Rolled back: $template (restored from archive)"
 
         "$SCRIPT_DIR/notify.sh" score-regression \
-          --template "$template" --old-score "$orig_score" --new-score "$current_score" 2>/dev/null || true
+          --template "$template" --old-score "$orig_score" --new-score "$current_score" 2>/dev/null || true # REASON: Notification failures must not block safety-critical rollback operations.
       else
         echo "Warning: Cannot rollback $template — no archived original found" >&2
       fi

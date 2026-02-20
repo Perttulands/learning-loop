@@ -37,7 +37,7 @@ errors=0
 
 for run_file in "${run_files[@]}"; do
   bead="$(basename "$run_file" .json)"
-  if "$SCRIPT_DIR/feedback-collector.sh" "$run_file" 2>/dev/null; then
+  if "$SCRIPT_DIR/feedback-collector.sh" "$run_file" 2>>"$FEEDBACK_DIR/backfill-errors.log"; then
     if [[ -f "$FEEDBACK_DIR/$bead.json" ]]; then
       processed=$((processed + 1))
     else

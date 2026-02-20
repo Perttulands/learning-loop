@@ -179,7 +179,7 @@ if [[ -f "$SCORES_DIR/template-scores.json" ]]; then
       os="$(echo "$regressions" | jq -r ".[$i].old_score")"
       ns="$(echo "$regressions" | jq -r ".[$i].new_score")"
       "$SCRIPT_DIR/notify.sh" score-regression \
-        --template "$tpl" --old-score "$os" --new-score "$ns" 2>/dev/null || true
+        --template "$tpl" --old-score "$os" --new-score "$ns" 2>/dev/null || true # REASON: Notification failures must not abort score file generation.
       i=$((i + 1))
     done
   fi

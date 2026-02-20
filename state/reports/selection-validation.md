@@ -1,35 +1,35 @@
 # Selection Validation Report
 
-**Generated:** 2026-02-16T06:36:58Z
-**Runs tested:** 10
+**Generated:** 2026-02-20T20:02:05Z
+**Runs tested:** 0
 **Scores data:** 6 templates scored
 
 ## Summary
 
-- **Accuracy:** 80% (8/10 correct classifications)
+- **Accuracy:** 0% (0/0 correct classifications)
 - **Task Types Covered:** bug-fix, feature, docs, code-review, script
 
 ## Results
 
 | Bead | Recommended Task Type | Expected | Match | Agent (Confidence) | Actual Usage |
 |------|----------------------|----------|-------|--------------------|-------------|
-| bd-1oq | bug-fix | bug-fix | YES | unknown (none) | Was: custom/claude/sonnet |
-| bd-3q4 | bug-fix | bug-fix | YES | unknown (none) | Was: custom/codex/gpt-5.3-codex |
-| bd-3o5 | bug-fix | bug-fix | YES | unknown (none) | Was: custom/claude/sonnet |
-| bd-39a | feature | feature | YES | unknown (low) | Was: custom/codex/gpt-5.3-codex |
-| bd-2hc | feature | feature | YES | unknown (low) | Was: custom/claude/sonnet |
-| bd-3uf | feature | feature | YES | unknown (low) | Was: feature/claude/sonnet |
-| bd-1kn | docs | docs | YES | unknown (none) | Was: custom/claude/opus |
-| bd-10f | bug-fix | code-review | NO | unknown (none) | Was: code-review/claude/sonnet |
-| bd-3ue | code-review | code-review | YES | unknown (low) | Was: custom/codex/gpt-5.3-codex |
-| bd-2d1 | feature | script | NO | unknown (low) | Was: script/claude/sonnet |
+| bd-1oq | Fix command injection vulnerability | bug-fix | SKIP | N/A | Run file not found |
+| bd-3q4 | Fix 3 hanging frontend tests | bug-fix | SKIP | N/A | Run file not found |
+| bd-3o5 | Fix SWARM lint issues by splitting | bug-fix | SKIP | N/A | Run file not found |
+| bd-39a | Add beads integration to Truthsayer | feature | SKIP | N/A | Run file not found |
+| bd-2hc | Create string_utils.py with functions | feature | SKIP | N/A | Run file not found |
+| bd-3uf | Prepare athena-web for production deployment | feature | SKIP | N/A | Run file not found |
+| bd-1kn | Write a complete PRD at docs/PRD.md | docs | SKIP | N/A | Run file not found |
+| bd-10f | Review completed Sprint 1 foundation | code-review | SKIP | N/A | Run file not found |
+| bd-3ue | Code review: Oathkeeper reliability | code-review | SKIP | N/A | Run file not found |
+| bd-2d1 | Create comprehensive documentation gardening agent skill | script | SKIP | N/A | Run file not found |
 
 ## Accuracy by Task Type
 
-- **bug-fix**: 100% (3/3)
-- **feature**: 100% (3/3)
-- **docs**: 100% (1/1)
-- **code-review**: 50% (1/2)
+- **bug-fix**: 0% (0/3)
+- **feature**: 0% (0/3)
+- **docs**: 0% (0/1)
+- **code-review**: 0% (0/2)
 - **script**: 0% (0/1)
 
 ## Edge Cases and Observations

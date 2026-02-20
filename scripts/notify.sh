@@ -91,6 +91,6 @@ if [[ "$NOTIFY_ENABLED" != "true" ]]; then
 fi
 
 # Send via wake-gateway (don't crash on failure)
-if ! "$WAKE_GATEWAY" "$MSG" 2>/dev/null; then
+if ! "$WAKE_GATEWAY" "$MSG" 2>/dev/null; then # REASON: Gateway stderr is noisy in cron context; failure is handled with warning below.
   echo "Warning: notification failed (gateway unreachable), message was: $MSG" >&2
 fi
