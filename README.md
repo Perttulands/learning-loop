@@ -58,6 +58,7 @@ learning-loop/
 | Script | Cadence | Purpose |
 |--------|---------|---------|
 | `scripts/feedback-collector.sh` | Per-run | Classify outcomes, extract signals, detect failure patterns |
+| `scripts/opus-judge.sh` | Per-run (sampled) | Produce qualitative quality judgment for completed runs |
 | `scripts/detect-patterns.sh` | Per-run | Tag failure patterns, update `state/feedback/pattern-registry.json` |
 | `scripts/score-templates.sh` | Hourly (cron) | Aggregate feedback into `state/scores/template-scores.json` and `state/scores/agent-scores.json` |
 | `scripts/select-template.sh` | Per-dispatch | Recommend template + agent based on scores and A/B tests |

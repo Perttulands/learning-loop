@@ -9,6 +9,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | Script | Purpose |
 |--------|---------|
 | `scripts/feedback-collector.sh` | Classify run outcomes, extract signals, write feedback records |
+| `scripts/opus-judge.sh` | Produce qualitative Opus-style quality assessment JSON for a run |
 | `scripts/detect-patterns.sh` | Detect failure patterns from run records, update registry |
 | `scripts/score-templates.sh` | Aggregate feedback into template and agent scores |
 | `scripts/select-template.sh` | Recommend template + agent for a task description |
