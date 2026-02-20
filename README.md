@@ -1,5 +1,8 @@
 # 🔄 Learning Loop
 
+![Learning Loop](images/learning-loop.jpg)
+
+
 *The Ouroboros. Half bronze, half circuit board. Every ending feeds the next beginning.*
 
 ---
