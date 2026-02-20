@@ -13,7 +13,7 @@ TEMPLATES_DIR="${TEMPLATES_DIR:-$PROJECT_DIR/templates}"
 AB_TESTS_FILE="${AB_TESTS_FILE:-$SCORES_DIR/ab-tests.json}"
 REFINEMENT_LOG="${REFINEMENT_LOG:-$SCORES_DIR/refinement-log.json}"
 REVIEW_QUEUE_FILE="${REVIEW_QUEUE_FILE:-$SCORES_DIR/promotion-review-queue.json}"
-NO_AUTO_PROMOTE="${NO_AUTO_PROMOTE:-true}"
+NO_AUTO_PROMOTE="${NO_AUTO_PROMOTE:-false}"
 
 usage() {
   echo "Usage: $0 <subcommand> [args]"

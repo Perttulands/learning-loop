@@ -284,7 +284,7 @@ assert_json_field "test has decision discarded" "$ab_data" ".tests[0].decision" 
 teardown
 
 # =========================================
-# Test: evaluate defaults to gated promotion with review queue
+# Test: evaluate defaults to auto-promotion when NO_AUTO_PROMOTE is unset
 # =========================================
 setup
 unset NO_AUTO_PROMOTE
@@ -297,12 +297,10 @@ jq -n '{schema_version: "1.0.0", tests: [{
   created_at: "2026-01-01T00:00:00Z"
 }]}' > "$AB_TESTS_FILE"
 out="$("$AB_SCRIPT" evaluate 2>&1)"
-assert_contains "gated promotion message" "$out" "Promotion gated"
+assert_contains "auto promotion message" "$out" "Promoted"
 ab_data="$(cat "$AB_TESTS_FILE")"
-assert_json_field "test marked completed as gated" "$ab_data" ".tests[0].decision" "gated"
-assert "review queue created" "$(test -f "$REVIEW_QUEUE_FILE" && echo yes)" "yes"
-queue_data="$(cat "$REVIEW_QUEUE_FILE")"
-assert_json_field "queue has pending entry" "$queue_data" ".entries[0].status" "pending"
+assert_json_field "test marked completed as promoted" "$ab_data" ".tests[0].decision" "promoted"
+assert "review queue not created" "$(test -f "$REVIEW_QUEUE_FILE" && echo yes || echo no)" "no"
 teardown
 
 # =========================================
