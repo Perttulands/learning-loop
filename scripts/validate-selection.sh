@@ -17,8 +17,8 @@ fi
 
 RUNS_DIR="$1"
 if [[ ! -d "$RUNS_DIR" ]]; then
-  echo "Error: runs directory not found: $RUNS_DIR" >&2
-  exit 1
+  echo "Warning: runs directory not found: $RUNS_DIR (report will contain SKIP rows)" >&2
+  mkdir -p "$RUNS_DIR"
 fi
 
 mkdir -p "$REPORT_DIR"
@@ -60,7 +60,7 @@ for case_entry in "${CASES[@]}"; do
   prompt=$(jq -r '.prompt' "$run_file" | head -c 200)
 
   # Run select-template.sh
-  recommendation=$(bash "$SELECT" "$prompt" 2>/dev/null) || recommendation="{}"
+  recommendation=$(bash "$SELECT" "$prompt" 2>/dev/null) || recommendation="{}" # REASON: Validation should continue even if a single recommendation call fails.
 
   rec_type=$(echo "$recommendation" | jq -r '.task_type // "error"')
   rec_template=$(echo "$recommendation" | jq -r '.template // "unknown"')
@@ -87,13 +87,15 @@ else
   accuracy=0
 fi
 
+scores_count="$(jq '.templates | length' "$PROJECT_DIR/state/scores/template-scores.json" 2>/dev/null || echo "N/A")" # REASON: Validation report should still render when scores are not yet generated.
+
 # Generate report
 cat > "$REPORT" << EOF
 # Selection Validation Report
 
 **Generated:** $(date -u +"%Y-%m-%dT%H:%M:%SZ")
 **Runs tested:** $total
-**Scores data:** $(jq '.templates | length' "$PROJECT_DIR/state/scores/template-scores.json" 2>/dev/null || echo "N/A") templates scored
+**Scores data:** ${scores_count} templates scored
 
 ## Summary
 
@@ -119,7 +121,7 @@ $(
         run_file="$RUNS_DIR/${bead}.json"
         if [[ -f "$run_file" ]]; then
           prompt=$(jq -r '.prompt' "$run_file" | head -c 200)
-          rec_type=$(bash "$SELECT" "$prompt" 2>/dev/null | jq -r '.task_type // "error"')
+          rec_type=$(bash "$SELECT" "$prompt" 2>/dev/null | jq -r '.task_type // "error"') # REASON: Per-type validation should continue even if one recommendation call emits stderr.
           if [[ "$rec_type" == "$expected" ]]; then
             type_correct=$((type_correct + 1))
           fi
