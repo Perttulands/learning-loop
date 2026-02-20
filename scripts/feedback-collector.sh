@@ -146,6 +146,57 @@ timestamp="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # Detect failure patterns
 failure_patterns="$(REGISTRY_FILE="$REGISTRY_FILE" "$SCRIPT_DIR/detect-patterns.sh" --update-registry "$RUN_FILE")"
 
+# Optional Opus judge integration (sampled, non-blocking)
+JUDGE_ENABLED="${JUDGE_ENABLED:-false}"
+JUDGE_SAMPLE_RATE="${JUDGE_SAMPLE_RATE:-0.25}"
+JUDGE_SCRIPT="${JUDGE_SCRIPT:-$SCRIPT_DIR/opus-judge.sh}"
+JUDGE_FORCE="${JUDGE_FORCE:-false}"
+
+opus_quality_score="null"
+opus_judge="null"
+
+should_sample_judge() {
+  local bead_id="$1"
+  if [[ "$JUDGE_ENABLED" != "true" ]]; then
+    return 1
+  fi
+  if [[ "$JUDGE_FORCE" == "true" ]]; then
+    return 0
+  fi
+
+  # Fast bounds checks for sample rate.
+  if echo "$JUDGE_SAMPLE_RATE <= 0" | bc -l | grep -q '^1'; then
+    return 1
+  fi
+  if echo "$JUDGE_SAMPLE_RATE >= 1" | bc -l | grep -q '^1'; then
+    return 0
+  fi
+
+  # Deterministic sampling by bead id for reproducibility.
+  local bucket threshold
+  bucket="$(printf '%s' "$bead_id" | cksum | awk '{print $1 % 1000}')"
+  threshold="$(echo "$JUDGE_SAMPLE_RATE * 1000" | bc -l | awk '{printf "%d", $1}')"
+  [[ "$bucket" -lt "$threshold" ]]
+}
+
+if should_sample_judge "$bead" && [[ -x "$JUDGE_SCRIPT" ]]; then
+  judge_output="$("$JUDGE_SCRIPT" "$RUN_FILE" 2>/dev/null || true)" # REASON: Judge execution is additive and must never block feedback collection.
+  if [[ -n "$judge_output" ]] && echo "$judge_output" | jq -e . >/dev/null 2>&1; then
+    opus_quality_score="$(echo "$judge_output" | jq '.quality_score // null')"
+    opus_judge="$(echo "$judge_output" | jq '{
+      judge_model: (.judge_model // "opus"),
+      style_rating: (.style_rating // null),
+      maintainability_rating: (.maintainability_rating // null),
+      correctness_rating: (.correctness_rating // null),
+      confidence: (.confidence // null),
+      verdict: (.verdict // null),
+      critique: (.critique // ""),
+      findings: (.findings // []),
+      judged_at: (.judged_at // null)
+    }')"
+  fi
+fi
+
 # Build feedback JSON
 jq -n \
   --arg schema_version "1.0.0" \
@@ -164,8 +215,8 @@ jq -n \
   --argjson retried "$retried" \
   --arg prompt_hash "$prompt_hash" \
   --argjson failure_patterns "$failure_patterns" \
-  --argjson opus_quality_score "null" \
-  --argjson opus_judge "null" \
+  --argjson opus_quality_score "$opus_quality_score" \
+  --argjson opus_judge "$opus_judge" \
   '{
     schema_version: $schema_version,
     bead: $bead,

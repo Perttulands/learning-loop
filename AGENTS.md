@@ -49,6 +49,9 @@ All scripts use env vars for testability:
 - `WAKE_GATEWAY` — path to wake-gateway.sh
 - `NOTIFY_ENABLED` — set to `false` to suppress notifications
 - `NO_AUTO_PROMOTE` — defaults to `true` (human-gated A/B promotions)
+- `JUDGE_ENABLED` — set to `true` to enable sampled Opus judging in feedback collection
+- `JUDGE_SAMPLE_RATE` — sample ratio (0-1) for running `opus-judge.sh` during feedback collection
+- `JUDGE_SCRIPT` — override path for judge executable (default: `scripts/opus-judge.sh`)
 
 ## Testing Conventions
 

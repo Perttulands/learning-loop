@@ -233,6 +233,32 @@ cat > "$TMPDIR/run-dispatch-hook.json" <<'EOF'
 }
 EOF
 
+# Mock Opus judge script for integration testing
+cat > "$TMPDIR/mock-opus-judge.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+run_file="$1"
+bead="$(jq -r '.bead' "$run_file")"
+jq -n \
+  --arg bead "$bead" \
+  --arg ts "2026-02-20T12:00:00Z" \
+  '{
+    schema_version: "1.0.0",
+    bead: $bead,
+    judged_at: $ts,
+    judge_model: "opus",
+    quality_score: 0.82,
+    style_rating: 4,
+    maintainability_rating: 4,
+    correctness_rating: 4,
+    confidence: "high",
+    verdict: "pass",
+    critique: "Strong implementation quality.",
+    findings: []
+  }'
+EOF
+chmod +x "$TMPDIR/mock-opus-judge.sh"
+
 # Set output dir
 export FEEDBACK_DIR="$TMPDIR/feedback"
 mkdir -p "$FEEDBACK_DIR"
@@ -402,6 +428,30 @@ assert_eq "dispatch run output written to workspace feedback dir" "true" \
   "$([ -f "$WORKSPACE_ROOT/state/feedback/athena-7b9.json" ] && echo true || echo false)"
 assert_eq "dispatch run outcome full_pass" "full_pass" \
   "$(jq -r '.outcome' "$WORKSPACE_ROOT/state/feedback/athena-7b9.json")"
+
+# === Test 15: Judge integration writes Opus quality fields when sampled ===
+echo ""
+echo "=== Test: Opus judge integration ==="
+JUDGE_ENABLED=true JUDGE_SAMPLE_RATE=1 JUDGE_SCRIPT="$TMPDIR/mock-opus-judge.sh" \
+  "$COLLECTOR" "$TMPDIR/run-full-pass.json"
+assert_eq "opus quality score populated" "0.82" \
+  "$(jq -r '.opus_quality_score' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "opus judge model populated" "opus" \
+  "$(jq -r '.opus_judge.judge_model' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "opus judge verdict populated" "pass" \
+  "$(jq -r '.opus_judge.verdict' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "opus judge critique populated" "Strong implementation quality." \
+  "$(jq -r '.opus_judge.critique' "$FEEDBACK_DIR/bd-aaa.json")"
+
+# === Test 16: Judge sampling disabled keeps fields null ===
+echo ""
+echo "=== Test: Judge sampling disabled ==="
+JUDGE_ENABLED=true JUDGE_SAMPLE_RATE=0 JUDGE_SCRIPT="$TMPDIR/mock-opus-judge.sh" \
+  "$COLLECTOR" "$TMPDIR/run-partial.json"
+assert_eq "opus quality remains null without sample" "null" \
+  "$(jq -r '.opus_quality_score' "$FEEDBACK_DIR/bd-bbb.json")"
+assert_eq "opus judge remains null without sample" "null" \
+  "$(jq -r '.opus_judge' "$FEEDBACK_DIR/bd-bbb.json")"
 
 echo ""
 echo "=== Results ==="

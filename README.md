@@ -34,6 +34,12 @@ Feedback records include optional qualitative fields for Opus-based judging:
 
 These fields default to `null` until judge integration is enabled.
 
+Enable sampled judge integration in `feedback-collector.sh` with:
+
+- `JUDGE_ENABLED=true`
+- `JUDGE_SAMPLE_RATE=<0..1>`
+- `JUDGE_SCRIPT=<path>` (optional override)
+
 ## Tech Stack
 
 - **Bash scripts** — all components are standalone bash scripts

@@ -87,9 +87,25 @@
           "type": "number",
           "description": "Maintainability rating on a 1-5 scale"
         },
+        "correctness_rating": {
+          "type": "number",
+          "description": "Correctness rating on a 1-5 scale"
+        },
+        "confidence": {
+          "type": "string",
+          "description": "Judge confidence (high, medium, low)"
+        },
+        "verdict": {
+          "type": "string",
+          "description": "Judge verdict (pass, partial, fail)"
+        },
         "critique": {
           "type": "string",
           "description": "Concise qualitative critique from the judge"
+        },
+        "findings": {
+          "type": "array",
+          "description": "Structured issue list from the judge"
         },
         "judged_at": {
           "type": "string",

@@ -24,3 +24,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-010 (`athena-qkp`): added judge input/output schema files and validation test coverage (`tests/test-opus-judge-spec.sh`).
 - LL-011 (`athena-64l`): implemented `scripts/opus-judge.sh` to emit structured qualitative judgment JSON (quality score, ratings, verdict, critique, findings) from run records.
 - LL-011 (`athena-64l`): added `tests/test-opus-judge.sh` and documented `opus-judge.sh` in README/AGENTS script inventories.
+- LL-012 (`athena-bnw`): integrated sampled Opus judging into `feedback-collector.sh`, populating `opus_quality_score` and enriched `opus_judge` fields when judge output is available.
+- LL-012 (`athena-bnw`): extended feedback collector tests with mock judge coverage for sampled and non-sampled paths.
