@@ -2,29 +2,29 @@
 +++ b/scripts/dispatch.sh
 @@ -18,7 +18,7 @@
  # ── Arguments ────────────────────────────────────────────────────────────────
-
+ 
  usage() {
 -    echo "Usage: $0 <bead-id> <repo-path> <agent-type> <prompt> [--branch <name>] [--force]" >&2
 +    echo "Usage: $0 <bead-id> <repo-path> <agent-type> <prompt> [--branch <name>] [--force] [--auto-select]" >&2
  }
-
+ 
  (( $# >= 4 )) || { usage; exit 1; }
 @@ -31,6 +31,7 @@
  BRANCH=""
  FORCE_DISPATCH="${DISPATCH_FORCE:-false}"
  TEMPLATE_NAME="custom"
 +AUTO_SELECT="false"
-
+ 
  while (( $# > 0 )); do
      case "$1" in
-@@ -38,9 +39,47 @@
+@@ -38,9 +39,57 @@
          --branch) BRANCH="$2"; shift 2 ;;
          --force)  FORCE_DISPATCH="true"; shift ;;
 +        --auto-select) AUTO_SELECT="true"; shift ;;
          *)        TEMPLATE_NAME="$1"; shift ;;
      esac
  done
-
+ 
 +# ── Auto-select: advisory template/agent recommendation ─────────────────────
 +# When --auto-select is passed, call select-template.sh with the prompt text
 +# to get a data-driven recommendation. This is advisory mode:
@@ -38,20 +38,29 @@
 +if [[ "$AUTO_SELECT" == "true" && -x "$SELECT_SCRIPT" ]]; then
 +    RECOMMENDATION="$(SCORES_DIR="${SCORES_DIR:-$LEARNING_LOOP_DIR/state/scores}" "$SELECT_SCRIPT" "$PROMPT" 2>/dev/null)" || RECOMMENDATION=""
 +
-+    if [[ -n "$RECOMMENDATION" ]]; then
++    if [[ -n "$RECOMMENDATION" ]] && echo "$RECOMMENDATION" | jq -e . >/dev/null 2>&1; then
 +        REC_TEMPLATE="$(echo "$RECOMMENDATION" | jq -r '.template // empty')"
++        REC_VARIANT="$(echo "$RECOMMENDATION" | jq -r '.variant // empty')"
 +        REC_AGENT="$(echo "$RECOMMENDATION" | jq -r '.agent // empty')"
 +        REC_SCORE="$(echo "$RECOMMENDATION" | jq -r '.score // 0')"
 +        REC_CONFIDENCE="$(echo "$RECOMMENDATION" | jq -r '.confidence // "none"')"
++        REC_REASONING="$(echo "$RECOMMENDATION" | jq -r '.reasoning // empty')"
 +        REC_WARNINGS="$(echo "$RECOMMENDATION" | jq -r '.warnings | join("; ") // ""')"
 +
-+        echo "Auto-select advisory: template=$REC_TEMPLATE agent=$REC_AGENT score=$REC_SCORE confidence=$REC_CONFIDENCE"
++        # Variant (if present) is the dispatchable template identity.
++        REC_EFFECTIVE_TEMPLATE="$REC_TEMPLATE"
++        if [[ -n "$REC_VARIANT" && "$REC_VARIANT" != "null" ]]; then
++            REC_EFFECTIVE_TEMPLATE="$REC_VARIANT"
++        fi
++
++        echo "Auto-select advisory: template=$REC_TEMPLATE variant=$REC_VARIANT agent=$REC_AGENT score=$REC_SCORE confidence=$REC_CONFIDENCE"
++        [[ -n "$REC_REASONING" ]] && echo "Auto-select reasoning: $REC_REASONING"
 +        [[ -n "$REC_WARNINGS" ]] && echo "Auto-select warnings: $REC_WARNINGS"
 +
 +        # Only apply recommendation if user did NOT pass explicit template
-+        if [[ "$TEMPLATE_NAME" == "custom" && -n "$REC_TEMPLATE" && "$REC_TEMPLATE" != "custom" ]]; then
-+            echo "Auto-select: using recommended template '$REC_TEMPLATE' (no explicit template provided)"
-+            TEMPLATE_NAME="$REC_TEMPLATE"
++        if [[ "$TEMPLATE_NAME" == "custom" && -n "$REC_EFFECTIVE_TEMPLATE" && "$REC_EFFECTIVE_TEMPLATE" != "custom" ]]; then
++            echo "Auto-select: using recommended template '$REC_EFFECTIVE_TEMPLATE' (no explicit template provided)"
++            TEMPLATE_NAME="$REC_EFFECTIVE_TEMPLATE"
 +        else
 +            echo "Auto-select: preserving explicit template '$TEMPLATE_NAME' (advisory only)"
 +        fi
@@ -61,12 +70,12 @@
 +            echo "Auto-select advisory: recommended agent '$REC_AGENT' differs from explicit '$AGENT_TYPE' — keeping explicit"
 +        fi
 +    else
-+        echo "Auto-select: select-template.sh returned no recommendation"
++        echo "Auto-select: select-template.sh returned no valid recommendation"
 +    fi
 +fi
 +
  AGENT_TYPE="${AGENT_TYPE_RAW%%:*}"
-@@ -301,6 +340,17 @@ complete_run() {
+@@ -301,6 +352,17 @@ complete_run() {
      write_run_record "$status" "$finished_at" "$duration" "$exit_code" "$output_summary" "$failure_reason" "$verification_json"
      write_result_record "$status" "$reason" "$finished_at" "$duration" "$exit_code" "$will_retry" "$output_summary" "$verification_json"
  
