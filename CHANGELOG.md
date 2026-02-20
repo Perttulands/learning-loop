@@ -26,3 +26,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-011 (`athena-64l`): added `tests/test-opus-judge.sh` and documented `opus-judge.sh` in README/AGENTS script inventories.
 - LL-012 (`athena-bnw`): integrated sampled Opus judging into `feedback-collector.sh`, populating `opus_quality_score` and enriched `opus_judge` fields when judge output is available.
 - LL-012 (`athena-bnw`): extended feedback collector tests with mock judge coverage for sampled and non-sampled paths.
+- LL-013 (`athena-2kq`): updated weekly strategy cron scheduling to Sunday 07:00 UTC in `config/crontab.txt`.
+- LL-013 (`athena-2kq`): updated cron installer tests to validate the new weekly schedule.

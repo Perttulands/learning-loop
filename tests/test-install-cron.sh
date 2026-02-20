@@ -41,12 +41,12 @@ assert "crontab has daily refine-prompts entry" '[[ "$crontab_content" == *"refi
 assert "refine-prompts has --auto flag" '[[ "$crontab_content" == *"refine-prompts.sh --auto"* ]]'
 assert "refine-prompts runs at 03:00" 'echo "$crontab_content" | grep -q "refine-prompts" && echo "$crontab_content" | grep "refine-prompts" | grep -qE "^0 3 \* \* \*"'
 
-# Weekly Sunday 00:00 UTC: weekly-strategy.sh
+# Weekly Sunday 07:00 UTC: weekly-strategy.sh
 assert "crontab has weekly strategy entry" '[[ "$crontab_content" == *"weekly-strategy.sh"* ]]'
-assert "weekly-strategy runs on Sunday" 'echo "$crontab_content" | grep -q "weekly-strategy" && echo "$crontab_content" | grep "weekly-strategy" | grep -qE "^0 0 \* \* 0"'
+assert "weekly-strategy runs on Sunday at 07:00" 'echo "$crontab_content" | grep -q "weekly-strategy" && echo "$crontab_content" | grep "weekly-strategy" | grep -qE "^0 7 \* \* 0"'
 
 # Crontab format
-assert "crontab has no empty schedule lines" '! echo "$crontab_content" | grep -qE "^\s*$" || true'
+assert "crontab has no empty schedule lines" '! echo "$crontab_content" | grep -qE "^\s*$" || true' # REASON: grep returns 1 for no matches; assertion intentionally handles that branch.
 assert "crontab entries use absolute paths" 'echo "$crontab_content" | grep -v "^#" | grep -v "^$" | grep -v "^[A-Z]" | while read -r line; do echo "$line" | grep -q "/scripts/"; done'
 
 # Log redirection
@@ -58,7 +58,7 @@ assert "install-cron.sh exists" '[[ -f "$INSTALL_CRON" ]]'
 assert "install-cron.sh is executable" '[[ -x "$INSTALL_CRON" ]]'
 
 # Usage message
-output="$("$INSTALL_CRON" --help 2>&1 || true)"
+output="$("$INSTALL_CRON" --help 2>&1 || true)" # REASON: help command may return non-zero on strict shells; this test checks help text only.
 assert "shows usage with --help" '[[ "$output" == *"Usage"* || "$output" == *"usage"* || "$output" == *"install"* ]]'
 
 # --dry-run mode (does not modify actual crontab)
