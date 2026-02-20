@@ -1,4 +1,12 @@
-# Agent Learning Loop
+# 🔄 Learning Loop
+
+*The Ouroboros. Half bronze, half circuit board. Every ending feeds the next beginning.*
+
+---
+
+The ouroboros — the serpent eating its own tail — is the oldest symbol of cycles that produce something. Not repetition. Transformation. Where the bronze scales meet the teeth, they become circuit board. Fiber-optic flowers bloom from the bite point. Four rings mark its body: per-run, hourly, daily, weekly. And beneath the serpent, a garden grows, fed by everything it consumes.
+
+That's the Learning Loop. Your agents run. Some succeed. Most fail — at least at first. The serpent eats the failure, digests it, and the next run grows from the remains. Nineteen percent pass rate becomes eighty percent. Not because someone tuned a prompt by hand. Because the system ate its own output and got smarter.
 
 A closed-loop system where every agent run — success or failure — automatically improves future runs.
 
@@ -130,3 +138,15 @@ Learning Loop integrates with beads for tracking feedback items and improvement 
 - `NO_AUTO_PROMOTE` defaults to `true` in `config/env.sh`.
 - When a variant wins evaluation, it is queued in `state/scores/promotion-review-queue.json`.
 - Use `scripts/ab-tests.sh review-queue` and `scripts/ab-tests.sh approve <template>` for human-gated promotion.
+
+## Part of the Agora
+
+Learning Loop was forged in **[Athena's Agora](https://github.com/Perttulands/athena-workspace)** — an autonomous coding system where AI agents build software and a bronze serpent makes sure they learn from every failure.
+
+[Argus](https://github.com/Perttulands/argus) watches the server. [Truthsayer](https://github.com/Perttulands/truthsayer) watches the code. [Oathkeeper](https://github.com/Perttulands/oathkeeper) watches the promises. [Relay](https://github.com/Perttulands/relay) carries the messages. The Ouroboros eats the output and grows the garden.
+
+The [mythology](https://github.com/Perttulands/athena-workspace/blob/main/mythology.md) has the full story.
+
+## License
+
+MIT
