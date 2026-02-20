@@ -69,6 +69,8 @@ setup() {
   export FEEDBACK_DIR="$TMPDIR/feedback"
   export AB_TESTS_FILE="$SCORES_DIR/ab-tests.json"
   export REFINEMENT_LOG="$SCORES_DIR/refinement-log.json"
+  export REVIEW_QUEUE_FILE="$SCORES_DIR/promotion-review-queue.json"
+  export NO_AUTO_PROMOTE="false"
   mkdir -p "$SCORES_DIR" "$TEMPLATES_DIR" "$FEEDBACK_DIR" "$TEMPLATES_DIR/.archive"
 }
 
@@ -133,7 +135,7 @@ create_two_scores() {
 # Test: usage message
 # =========================================
 setup
-out="$("$AB_SCRIPT" --help 2>&1 || true)"
+out="$("$AB_SCRIPT" --help 2>&1 || true)" # REASON: Help path is allowed to return non-zero on some shells; test only validates usage text.
 assert_contains "help shows usage" "$out" "Usage"
 teardown
 
@@ -141,7 +143,7 @@ teardown
 # Test: usage without subcommand
 # =========================================
 setup
-out="$("$AB_SCRIPT" 2>&1 || true)"
+out="$("$AB_SCRIPT" 2>&1 || true)" # REASON: No-subcommand path intentionally exits non-zero; test asserts usage output.
 assert_contains "no subcommand shows usage" "$out" "Usage"
 teardown
 
@@ -279,6 +281,50 @@ assert_contains "discard message" "$out" "Discarded"
 ab_data="$(cat "$AB_TESTS_FILE")"
 assert_json_field "test marked completed" "$ab_data" ".tests[0].status" "completed"
 assert_json_field "test has decision discarded" "$ab_data" ".tests[0].decision" "discarded"
+teardown
+
+# =========================================
+# Test: evaluate defaults to gated promotion with review queue
+# =========================================
+setup
+unset NO_AUTO_PROMOTE
+create_template "bug-fix"
+create_variant "bug-fix" 1
+create_two_scores "bug-fix" 0.4 10 0.4 "bug-fix-v1" 0.6 10 0.6
+jq -n '{schema_version: "1.0.0", tests: [{
+  original: "bug-fix", variant: "bug-fix-v1", status: "active",
+  target_runs: 10, original_runs: 10, variant_runs: 10,
+  created_at: "2026-01-01T00:00:00Z"
+}]}' > "$AB_TESTS_FILE"
+out="$("$AB_SCRIPT" evaluate 2>&1)"
+assert_contains "gated promotion message" "$out" "Promotion gated"
+ab_data="$(cat "$AB_TESTS_FILE")"
+assert_json_field "test marked completed as gated" "$ab_data" ".tests[0].decision" "gated"
+assert "review queue created" "$(test -f "$REVIEW_QUEUE_FILE" && echo yes)" "yes"
+queue_data="$(cat "$REVIEW_QUEUE_FILE")"
+assert_json_field "queue has pending entry" "$queue_data" ".entries[0].status" "pending"
+teardown
+
+# =========================================
+# Test: approve promotes queued variant
+# =========================================
+setup
+export NO_AUTO_PROMOTE="true"
+create_template "bug-fix"
+create_variant "bug-fix" 1
+create_two_scores "bug-fix" 0.4 10 0.4 "bug-fix-v1" 0.6 10 0.6
+jq -n '{schema_version: "1.0.0", tests: [{
+  original: "bug-fix", variant: "bug-fix-v1", status: "active",
+  target_runs: 10, original_runs: 10, variant_runs: 10,
+  created_at: "2026-01-01T00:00:00Z"
+}]}' > "$AB_TESTS_FILE"
+"$AB_SCRIPT" evaluate >/dev/null 2>&1
+approve_out="$("$AB_SCRIPT" approve bug-fix 2>&1)"
+assert_contains "approve promotes variant" "$approve_out" "Promoted"
+queue_data="$(cat "$REVIEW_QUEUE_FILE")"
+assert_json_field "queue entry marked approved" "$queue_data" ".entries[0].status" "approved"
+ab_data="$(cat "$AB_TESTS_FILE")"
+assert_json_field "gated decision becomes promoted" "$ab_data" ".tests[0].decision" "promoted"
 teardown
 
 # =========================================

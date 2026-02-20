@@ -62,7 +62,7 @@ learning-loop/
 | `scripts/score-templates.sh` | Hourly (cron) | Aggregate feedback into `state/scores/template-scores.json` and `state/scores/agent-scores.json` |
 | `scripts/select-template.sh` | Per-dispatch | Recommend template + agent based on scores and A/B tests |
 | `scripts/refine-prompts.sh` | Daily (cron) | Generate template variants from failure data |
-| `scripts/ab-tests.sh` | On-demand | A/B test lifecycle: create, pick, record, evaluate |
+| `scripts/ab-tests.sh` | On-demand | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Integrated | Safety: variant limits, rollback, loop breaker |
 | `scripts/notify.sh` | Integrated | Alerts via wake-gateway (variant events, regressions, weekly report) |
 | `scripts/manage-patterns.sh` | On-demand | Pattern registry: list, detail, mitigate, effectiveness |
@@ -108,3 +108,9 @@ Learning Loop integrates with beads for tracking feedback items and improvement 
 - Fork: [Perttulands/beads](https://github.com/Perttulands/beads) (branch `v0.46.0-stable`)
 - Install: `go install github.com/Perttulands/beads/cmd/bd@v0.46.0`
 - Verify: `bd --version` should show `bd version 0.46.0`
+
+## Refinement Gating
+
+- `NO_AUTO_PROMOTE` defaults to `true` in `config/env.sh`.
+- When a variant wins evaluation, it is queued in `state/scores/promotion-review-queue.json`.
+- Use `scripts/ab-tests.sh review-queue` and `scripts/ab-tests.sh approve <template>` for human-gated promotion.

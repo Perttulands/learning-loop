@@ -13,7 +13,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/score-templates.sh` | Aggregate feedback into template and agent scores |
 | `scripts/select-template.sh` | Recommend template + agent for a task description |
 | `scripts/refine-prompts.sh` | Generate improved template variants from failure data |
-| `scripts/ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate |
+| `scripts/ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Safety limits: variant caps, rollback, loop breaker |
 | `scripts/notify.sh` | Send notifications via wake-gateway |
 | `scripts/manage-patterns.sh` | Pattern registry: list, detail, mitigate, effectiveness |
@@ -32,6 +32,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `state/scores/template-scores.json` | Per-template composite scores |
 | `state/scores/agent-scores.json` | Per-agent global and per-template stats |
 | `state/scores/ab-tests.json` | Active A/B test state |
+| `state/scores/promotion-review-queue.json` | Human review queue for gated promotions |
 | `state/scores/refinement-log.json` | All refinement and A/B decisions |
 | `state/reports/strategy-YYYY-WNN.json` | Weekly strategy reports |
 
@@ -46,7 +47,7 @@ All scripts use env vars for testability:
 - `REPORTS_DIR` — reports output directory (default: `state/reports/`)
 - `WAKE_GATEWAY` — path to wake-gateway.sh
 - `NOTIFY_ENABLED` — set to `false` to suppress notifications
-- `NO_AUTO_PROMOTE` — set to `true` for human-gated A/B promotions
+- `NO_AUTO_PROMOTE` — defaults to `true` (human-gated A/B promotions)
 
 ## Testing Conventions
 

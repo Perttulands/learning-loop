@@ -11,3 +11,6 @@ export RESULTS_DIR="/home/chrote/athena/workspace/state/results"
 # Scores and feedback stored locally
 export SCORES_DIR="/home/chrote/athena/tools/learning-loop/state/scores"
 export FEEDBACK_DIR="/home/chrote/athena/tools/learning-loop/state/feedback"
+
+# Human-gated promotions by default for refinement workflow safety
+export NO_AUTO_PROMOTE="true"

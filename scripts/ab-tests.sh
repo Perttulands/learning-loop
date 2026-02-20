@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ab-tests.sh - A/B test lifecycle management for template variants
 # Usage: ./scripts/ab-tests.sh <subcommand> [args]
-# Subcommands: create, pick, record, evaluate, list
-# Env: SCORES_DIR, TEMPLATES_DIR, AB_TESTS_FILE, REFINEMENT_LOG
+# Subcommands: create, pick, record, evaluate, list, review-queue, approve
+# Env: SCORES_DIR, TEMPLATES_DIR, AB_TESTS_FILE, REFINEMENT_LOG, REVIEW_QUEUE_FILE, NO_AUTO_PROMOTE
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -12,6 +12,8 @@ SCORES_DIR="${SCORES_DIR:-$PROJECT_DIR/state/scores}"
 TEMPLATES_DIR="${TEMPLATES_DIR:-$PROJECT_DIR/templates}"
 AB_TESTS_FILE="${AB_TESTS_FILE:-$SCORES_DIR/ab-tests.json}"
 REFINEMENT_LOG="${REFINEMENT_LOG:-$SCORES_DIR/refinement-log.json}"
+REVIEW_QUEUE_FILE="${REVIEW_QUEUE_FILE:-$SCORES_DIR/promotion-review-queue.json}"
+NO_AUTO_PROMOTE="${NO_AUTO_PROMOTE:-true}"
 
 usage() {
   echo "Usage: $0 <subcommand> [args]"
@@ -21,6 +23,8 @@ usage() {
   echo "  record <template> <original|variant>           Record a dispatch run"
   echo "  evaluate                                       Evaluate all ready tests"
   echo "  list                                           List all A/B tests"
+  echo "  review-queue                                   List pending gated promotions"
+  echo "  approve <original>                             Approve and promote a queued variant"
   echo "  --help                                         Show this message"
 }
 
@@ -29,6 +33,13 @@ ensure_file() {
   mkdir -p "$(dirname "$AB_TESTS_FILE")"
   if [[ ! -f "$AB_TESTS_FILE" ]]; then
     echo '{"schema_version":"1.0.0","tests":[]}' > "$AB_TESTS_FILE"
+  fi
+}
+
+ensure_review_queue() {
+  mkdir -p "$(dirname "$REVIEW_QUEUE_FILE")"
+  if [[ ! -f "$REVIEW_QUEUE_FILE" ]]; then
+    echo '{"schema_version":"1.0.0","entries":[]}' > "$REVIEW_QUEUE_FILE"
   fi
 }
 
@@ -66,7 +77,7 @@ cmd_create() {
   # Enforce variant limit
   local guardrails="$SCRIPT_DIR/guardrails.sh"
   if [[ -x "$guardrails" ]]; then
-    "$guardrails" enforce-variant-limit "$original" 2>/dev/null || true
+    "$guardrails" enforce-variant-limit "$original" 2>/dev/null || true # REASON: Guardrail checks are advisory and must not block A/B test creation.
   fi
 
   echo "Created A/B test: $original vs $variant (target: $target_runs runs each)"
@@ -129,6 +140,68 @@ cmd_record() {
   mv "$AB_TESTS_FILE.tmp" "$AB_TESTS_FILE"
 }
 
+promote_variant() {
+  local orig="$1" var="$2" orig_score="$3" var_score="$4"
+  local decision="promoted"
+
+  echo "Promoted: $var (score: $var_score) beats $orig (score: $orig_score)"
+
+  "$SCRIPT_DIR/notify.sh" variant-promoted \
+    --variant "$var" --original "$orig" \
+    --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true # REASON: Notification failures must not break promotion flow.
+
+  mkdir -p "$TEMPLATES_DIR/.archive"
+  if [[ -f "$TEMPLATES_DIR/${orig}.md" ]]; then
+    cp "$TEMPLATES_DIR/${orig}.md" "$TEMPLATES_DIR/.archive/${orig}-pre-${var}.md"
+    mv "$TEMPLATES_DIR/${orig}.md" "$TEMPLATES_DIR/.archive/${orig}.md"
+  fi
+  if [[ -f "$TEMPLATES_DIR/${var}.md" ]]; then
+    cp "$TEMPLATES_DIR/${var}.md" "$TEMPLATES_DIR/${orig}.md"
+    mv "$TEMPLATES_DIR/${var}.md" "$TEMPLATES_DIR/.archive/${var}.md"
+  fi
+
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  jq --arg orig "$orig" --arg decision "$decision" --arg ts "$ts" \
+    '(.tests[] | select(.status == "active" and .original == $orig)) |=
+      (.status = "completed" | .decision = $decision | .completed_at = $ts)' \
+    "$AB_TESTS_FILE" > "$AB_TESTS_FILE.tmp"
+  mv "$AB_TESTS_FILE.tmp" "$AB_TESTS_FILE"
+
+  log_decision "$orig" "$var" "$decision" "$orig_score" "$var_score"
+}
+
+queue_promotion() {
+  local orig="$1" var="$2" orig_score="$3" var_score="$4" diff="$5"
+  ensure_review_queue
+
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  jq --arg orig "$orig" --arg var "$var" \
+     --argjson os "$orig_score" --argjson vs "$var_score" --argjson d "$diff" --arg ts "$ts" \
+    '.entries += [{
+      original: $orig,
+      variant: $var,
+      original_score: $os,
+      variant_score: $vs,
+      score_diff: $d,
+      status: "pending",
+      queued_at: $ts
+    }]' "$REVIEW_QUEUE_FILE" > "$REVIEW_QUEUE_FILE.tmp"
+  mv "$REVIEW_QUEUE_FILE.tmp" "$REVIEW_QUEUE_FILE"
+
+  local complete_ts
+  complete_ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  jq --arg orig "$orig" --arg ts "$complete_ts" \
+    '(.tests[] | select(.status == "active" and .original == $orig)) |=
+      (.status = "completed" | .decision = "gated" | .completed_at = $ts)' \
+    "$AB_TESTS_FILE" > "$AB_TESTS_FILE.tmp"
+  mv "$AB_TESTS_FILE.tmp" "$AB_TESTS_FILE"
+
+  log_decision "$orig" "$var" "gated" "$orig_score" "$var_score"
+}
+
 # Evaluate all active tests that have reached target_runs
 cmd_evaluate() {
   ensure_file
@@ -181,30 +254,17 @@ cmd_evaluate() {
 
     # Promote if variant > original by >= 0.1
     if echo "$diff >= 0.1" | bc -l | grep -q '^1'; then
-      # Check NO_AUTO_PROMOTE gate
-      if [[ "${NO_AUTO_PROMOTE:-false}" == "true" ]]; then
-        echo "Promotion gated: $var (score: $var_score) beats $orig (score: $orig_score) by $diff. Requires human review."
+      if [[ "$NO_AUTO_PROMOTE" == "true" ]]; then
+        echo "Promotion gated: $var (score: $var_score) beats $orig (score: $orig_score) by $diff. Added to review queue."
+        queue_promotion "$orig" "$var" "$orig_score" "$var_score" "$diff"
         i=$((i + 1))
         continue
       fi
 
       decision="promoted"
-      echo "Promoted: $var (score: $var_score) beats $orig (score: $orig_score) by $diff"
-
-      # Notify: variant promoted
-      "$SCRIPT_DIR/notify.sh" variant-promoted \
-        --variant "$var" --original "$orig" \
-        --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true
-
-      # Archive original, rename variant to original name
-      mkdir -p "$TEMPLATES_DIR/.archive"
-      if [[ -f "$TEMPLATES_DIR/${orig}.md" ]]; then
-        mv "$TEMPLATES_DIR/${orig}.md" "$TEMPLATES_DIR/.archive/${orig}.md"
-      fi
-      if [[ -f "$TEMPLATES_DIR/${var}.md" ]]; then
-        cp "$TEMPLATES_DIR/${var}.md" "$TEMPLATES_DIR/${orig}.md"
-        mv "$TEMPLATES_DIR/${var}.md" "$TEMPLATES_DIR/.archive/${var}.md"
-      fi
+      promote_variant "$orig" "$var" "$orig_score" "$var_score"
+      i=$((i + 1))
+      continue
     else
       decision="discarded"
       echo "Discarded: $var (score: $var_score) did not beat $orig (score: $orig_score) by >= 0.1"
@@ -212,7 +272,7 @@ cmd_evaluate() {
       # Notify: variant discarded
       "$SCRIPT_DIR/notify.sh" variant-discarded \
         --variant "$var" --original "$orig" \
-        --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true
+        --variant-score "$var_score" --original-score "$orig_score" 2>/dev/null || true # REASON: Notification failures must not break evaluation flow.
 
       # Archive variant
       mkdir -p "$TEMPLATES_DIR/.archive"
@@ -283,6 +343,58 @@ cmd_list() {
   jq -r '.tests[] | "\(.original) vs \(.variant) | status: \(.status) | runs: \(.original_runs)/\(.target_runs) orig, \(.variant_runs)/\(.target_runs) var"' "$AB_TESTS_FILE"
 }
 
+cmd_review_queue() {
+  ensure_review_queue
+
+  local pending
+  pending="$(jq '[.entries[] | select(.status == "pending")]' "$REVIEW_QUEUE_FILE")"
+  local count
+  count="$(echo "$pending" | jq 'length')"
+  if [[ "$count" -eq 0 ]]; then
+    echo "No pending promotion reviews."
+    return
+  fi
+
+  echo "$pending" | jq -r '.[] | "\(.original) vs \(.variant) | diff: \(.score_diff) | queued: \(.queued_at)"'
+}
+
+cmd_approve() {
+  local original="$1"
+  ensure_review_queue
+  ensure_file
+
+  local entry
+  entry="$(jq --arg o "$original" \
+    '[.entries[] | select(.status == "pending" and .original == $o)] | if length > 0 then .[0] else null end' \
+    "$REVIEW_QUEUE_FILE")"
+
+  if [[ "$entry" == "null" ]]; then
+    echo "No pending review entry for $original" >&2
+    return 1
+  fi
+
+  local variant orig_score var_score
+  variant="$(echo "$entry" | jq -r '.variant')"
+  orig_score="$(echo "$entry" | jq '.original_score')"
+  var_score="$(echo "$entry" | jq '.variant_score')"
+
+  promote_variant "$original" "$variant" "$orig_score" "$var_score"
+
+  local ts
+  ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  jq --arg o "$original" --arg ts "$ts" \
+    '(.tests[] | select(.original == $o and .decision == "gated")) |=
+      (.decision = "promoted" | .completed_at = $ts)' \
+    "$AB_TESTS_FILE" > "$AB_TESTS_FILE.tmp"
+  mv "$AB_TESTS_FILE.tmp" "$AB_TESTS_FILE"
+
+  jq --arg o "$original" --arg ts "$ts" \
+    '(.entries[] | select(.status == "pending" and .original == $o)) |=
+      (.status = "approved" | .resolved_at = $ts)' \
+    "$REVIEW_QUEUE_FILE" > "$REVIEW_QUEUE_FILE.tmp"
+  mv "$REVIEW_QUEUE_FILE.tmp" "$REVIEW_QUEUE_FILE"
+}
+
 # Main dispatch
 if [[ $# -lt 1 ]]; then
   usage
@@ -319,6 +431,17 @@ case "$1" in
     ;;
   list)
     cmd_list
+    ;;
+  review-queue)
+    cmd_review_queue
+    ;;
+  approve)
+    shift
+    if [[ $# -lt 1 ]]; then
+      echo "Usage: $0 approve <original>" >&2
+      exit 1
+    fi
+    cmd_approve "$1"
     ;;
   --help|-h)
     usage
