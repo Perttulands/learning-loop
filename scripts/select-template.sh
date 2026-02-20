@@ -19,17 +19,90 @@ SCORES_FILE="$SCORES_DIR/template-scores.json"
 
 # Classify task type from keywords
 classify_task() {
-  local task_lower
+  local task_lower best_template best_score tpl
+  declare -A score
+
+  score["bug-fix"]=0
+  score["feature"]=0
+  score["refactor"]=0
+  score["docs"]=0
+  score["script"]=0
+  score["code-review"]=0
+
   task_lower="$(echo "$1" | tr '[:upper:]' '[:lower:]')"
-  case "$task_lower" in
-    *fix*|*bug*|*debug*) echo "bug-fix" ;;
-    *add*|*create*|*implement*) echo "feature" ;;
-    *refactor*) echo "refactor" ;;
-    *doc*) echo "docs" ;;
-    *script*) echo "script" ;;
-    *review*) echo "code-review" ;;
-    *) echo "custom" ;;
-  esac
+
+  add_score() {
+    local key="$1" amount="$2"
+    score["$key"]=$((score["$key"] + amount))
+  }
+
+  # Bug-fix / debugging signals
+  [[ "$task_lower" =~ (fix|bug|debug|regression|crash|failing\ test|error|incident|hotfix|broken) ]] && add_score "bug-fix" 4
+  [[ "$task_lower" =~ (investigate|root\ cause|why\ does|repair|resolve) ]] && add_score "bug-fix" 2
+
+  # Feature delivery signals
+  [[ "$task_lower" =~ (add|create|implement|build|introduce|support|new\ endpoint|new\ api|feature\ flag) ]] && add_score "feature" 3
+  [[ "$task_lower" =~ (workflow|integration|pipeline|capability|enable|allow\ users\ to) ]] && add_score "feature" 2
+
+  # Refactor / cleanup signals
+  [[ "$task_lower" =~ (refactor|cleanup|clean\ up|simplify|restructure|reorganize|rename|extract) ]] && add_score "refactor" 4
+  [[ "$task_lower" =~ (tech\ debt|maintainability|readability|modularize) ]] && add_score "refactor" 2
+  [[ "$task_lower" =~ (reduce\ tech\ debt|debt\ reduction) ]] && add_score "refactor" 2
+
+  # Documentation signals
+  [[ "$task_lower" =~ (doc|documentation|readme|changelog|guide|tutorial|comment) ]] && add_score "docs" 4
+  [[ "$task_lower" =~ (api\ docs|usage\ examples|how\ to) ]] && add_score "docs" 2
+  [[ "$task_lower" =~ (^add|^update|^write).*(guide|docs|documentation|readme|comment|changelog) ]] && add_score "docs" 3
+
+  # Script/automation signals
+  [[ "$task_lower" =~ (script|bash|shell|cron|automation|automate|cli\ tool|job\ runner) ]] && add_score "script" 4
+  [[ "$task_lower" =~ (scheduled|scheduler|task\ runner) ]] && add_score "script" 2
+
+  # Review/audit signals
+  [[ "$task_lower" =~ (review|audit|assess|analyze|inspection|code\ review|risk\ analysis) ]] && add_score "code-review" 4
+  [[ "$task_lower" =~ (findings|severity|regression\ risk|threat\ model) ]] && add_score "code-review" 2
+
+  # Structure-aware tie breakers
+  [[ "$task_lower" =~ (^fix|^debug|^repair) ]] && add_score "bug-fix" 2
+  [[ "$task_lower" =~ (^add|^implement|^create) ]] && add_score "feature" 2
+  [[ "$task_lower" =~ (^refactor|^cleanup) ]] && add_score "refactor" 2
+  [[ "$task_lower" =~ (^document|^write\ docs|^update\ readme) ]] && add_score "docs" 2
+  [[ "$task_lower" =~ (^write\ a\ script|^create\ a\ script|^automate) ]] && add_score "script" 2
+  [[ "$task_lower" =~ (^review|^audit) ]] && add_score "code-review" 2
+
+  # Explicit docs + script can be ambiguous (doc generation script). Bias to script when automation is present.
+  if [[ "${score["docs"]}" -gt 0 && "${score["script"]}" -gt 0 && "$task_lower" =~ (automate|script|generator) ]]; then
+    add_score "script" 1
+  fi
+
+  # Structure-aware disambiguation between feature and script/doc requests.
+  if [[ "${score["feature"]}" -gt 0 && "${score["script"]}" -gt 0 && "$task_lower" =~ (bash|script|automation|cron|runner) ]]; then
+    add_score "script" 2
+  fi
+  if [[ "${score["feature"]}" -gt 0 && "${score["docs"]}" -gt 0 && "$task_lower" =~ (guide|documentation|docs|readme|comment|changelog) ]]; then
+    add_score "docs" 2
+  fi
+
+  # Planning/meta tasks should fall back to custom unless explicit implementation keywords dominate.
+  if [[ "$task_lower" =~ (estimate\ effort|roadmap|brainstorm|stakeholder\ update|initiative|planning) ]]; then
+    add_score "feature" -3
+    add_score "bug-fix" -2
+    add_score "refactor" -2
+    add_score "docs" -1
+    add_score "script" -2
+    add_score "code-review" -1
+  fi
+
+  best_template="custom"
+  best_score=0
+  for tpl in bug-fix feature refactor docs script code-review; do
+    if [[ "${score[$tpl]}" -gt "$best_score" ]]; then
+      best_template="$tpl"
+      best_score="${score[$tpl]}"
+    fi
+  done
+
+  echo "$best_template"
 }
 
 task_type="$(classify_task "$TASK")"
@@ -57,7 +130,7 @@ fi
 AB_SCRIPT="$SCRIPT_DIR/ab-tests.sh"
 ab_pick=""
 if [[ -x "$AB_SCRIPT" ]]; then
-  ab_pick="$("$AB_SCRIPT" pick "$task_type" 2>/dev/null || true)"
+  ab_pick="$("$AB_SCRIPT" pick "$task_type" 2>/dev/null || true)" # REASON: A/B pick is advisory; selection must still work if A/B state is unavailable.
 fi
 
 # Look up matching template and pick best agent

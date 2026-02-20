@@ -30,3 +30,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-013 (`athena-2kq`): updated cron installer tests to validate the new weekly schedule.
 - LL-014 (`athena-r3b`): added `agent_recommendations` to weekly strategy reports with per-agent strengths, weaknesses, and targeted recommendation text.
 - LL-014 (`athena-r3b`): added `tests/test-weekly-agent-recommendations.sh` to validate recommendation generation from per-template agent scores.
+- LL-015 (`athena-3bh`): replaced keyword-only task classification with weighted structure-aware pattern scoring in `select-template.sh`.
+- LL-015 (`athena-3bh`): added `tests/test-task-classification.sh` with 58 labeled prompts and enforced >=90% classification accuracy.
