@@ -164,6 +164,8 @@ jq -n \
   --argjson retried "$retried" \
   --arg prompt_hash "$prompt_hash" \
   --argjson failure_patterns "$failure_patterns" \
+  --argjson opus_quality_score "null" \
+  --argjson opus_judge "null" \
   '{
     schema_version: $schema_version,
     bead: $bead,
@@ -182,5 +184,7 @@ jq -n \
       retried: $retried
     },
     failure_patterns: $failure_patterns,
+    opus_quality_score: $opus_quality_score,
+    opus_judge: $opus_judge,
     prompt_hash: $prompt_hash
   }' > "$FEEDBACK_DIR/$bead.json"

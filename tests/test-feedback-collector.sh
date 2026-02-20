@@ -264,6 +264,14 @@ assert_eq "full pass prompt_hash" "abc123" \
   "$(jq -r '.prompt_hash' "$FEEDBACK_DIR/bd-aaa.json")"
 assert_eq "full pass has schema_version" "true" \
   "$(jq 'has("schema_version")' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "full pass includes opus_quality_score field" "true" \
+  "$(jq 'has("opus_quality_score")' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "full pass default opus_quality_score is null" "null" \
+  "$(jq -r '.opus_quality_score' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "full pass includes opus_judge field" "true" \
+  "$(jq 'has("opus_judge")' "$FEEDBACK_DIR/bd-aaa.json")"
+assert_eq "full pass default opus_judge is null" "null" \
+  "$(jq -r '.opus_judge' "$FEEDBACK_DIR/bd-aaa.json")"
 
 # === Test 3: Signal extraction ===
 echo ""

@@ -25,6 +25,15 @@ Four nested feedback loops at different cadences:
 | **Prompt Refinement** | Daily | `refine-prompts.sh` | Auto-generate improved template variants via A/B testing |
 | **Strategy Evolution** | Weekly | `weekly-strategy.sh` | Cross-template learnings and system-level recommendations |
 
+## Quality Signals
+
+Feedback records include optional qualitative fields for Opus-based judging:
+
+- `opus_quality_score` (0-1)
+- `opus_judge` payload (`judge_model`, `style_rating`, `maintainability_rating`, `critique`, `judged_at`)
+
+These fields default to `null` until judge integration is enabled.
+
 ## Tech Stack
 
 - **Bash scripts** — all components are standalone bash scripts

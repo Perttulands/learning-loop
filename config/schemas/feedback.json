@@ -67,6 +67,37 @@
       "items": "string",
       "description": "Tagged failure pattern identifiers"
     },
+    "opus_quality_score": {
+      "type": ["number", "null"],
+      "description": "Optional Opus quality score in [0,1] when qualitative review runs"
+    },
+    "opus_judge": {
+      "type": ["object", "null"],
+      "description": "Optional qualitative judge payload for this run",
+      "fields": {
+        "judge_model": {
+          "type": "string",
+          "description": "Judge model identifier (for example, opus)"
+        },
+        "style_rating": {
+          "type": "number",
+          "description": "Style rating on a 1-5 scale"
+        },
+        "maintainability_rating": {
+          "type": "number",
+          "description": "Maintainability rating on a 1-5 scale"
+        },
+        "critique": {
+          "type": "string",
+          "description": "Concise qualitative critique from the judge"
+        },
+        "judged_at": {
+          "type": "string",
+          "format": "iso8601",
+          "description": "Timestamp for the judge assessment"
+        }
+      }
+    },
     "prompt_hash": {
       "type": "string",
       "description": "SHA256 hash of the prompt content for dedup"
