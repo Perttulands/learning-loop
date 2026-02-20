@@ -36,3 +36,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-016 (`athena-esi`): scheduled dashboard generation in cron and added `tests/test-dashboard.sh` coverage for dashboard output.
 - LL-017 (`athena-059`): added `scripts/guardrail-audit.sh` to run guardrail smoke checks and emit `guardrail-audit-*.json` reports.
 - LL-017 (`athena-059`): added `tests/test-guardrail-audit.sh` and documented guardrail audit tooling in AGENTS/README.
+- LL-018 (`athena-54j`): added `scripts/backup-state.sh` with `backup`, `list`, and `restore` commands plus 30-day retention cleanup.
+- LL-018 (`athena-54j`): added daily backup cron scheduling and `tests/test-backup-state.sh` coverage for backup creation, restore, and retention behavior.

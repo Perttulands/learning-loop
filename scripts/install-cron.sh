@@ -75,4 +75,4 @@ filtered="$(echo "$existing" | grep -v "$MARKER" || true)" # REASON: grep return
   echo "$entries"
 } | crontab -
 
-echo "Installed learning-loop cron jobs (4 entries)"
+echo "Installed learning-loop cron jobs (5 entries)"

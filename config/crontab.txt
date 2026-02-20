@@ -11,5 +11,8 @@
 # Daily 03:00 UTC: auto-refine underperforming templates
 0 3 * * * . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/refine-prompts.sh --auto >> __PROJECT_DIR__/state/logs/refine-prompts.log 2>&1
 
+# Daily 04:30 UTC: backup state with retention
+30 4 * * * . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/backup-state.sh backup >> __PROJECT_DIR__/state/logs/backup-state.log 2>&1
+
 # Weekly Sunday 07:00 UTC: generate strategy report
 0 7 * * 0 . __PROJECT_DIR__/config/env.sh && __PROJECT_DIR__/scripts/weekly-strategy.sh >> __PROJECT_DIR__/state/logs/weekly-strategy.log 2>&1

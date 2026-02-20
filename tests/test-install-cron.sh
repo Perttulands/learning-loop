@@ -45,6 +45,10 @@ assert "crontab has daily refine-prompts entry" '[[ "$crontab_content" == *"refi
 assert "refine-prompts has --auto flag" '[[ "$crontab_content" == *"refine-prompts.sh --auto"* ]]'
 assert "refine-prompts runs at 03:00" 'echo "$crontab_content" | grep -q "refine-prompts" && echo "$crontab_content" | grep "refine-prompts" | grep -qE "^0 3 \* \* \*"'
 
+# Daily 04:30 UTC: backup-state.sh
+assert "crontab has backup-state entry" '[[ "$crontab_content" == *"backup-state.sh backup"* ]]'
+assert "backup-state runs at 04:30" 'echo "$crontab_content" | grep -q "backup-state.sh" && echo "$crontab_content" | grep "backup-state.sh" | grep -qE "^30 4 \* \* \*"'
+
 # Weekly Sunday 07:00 UTC: weekly-strategy.sh
 assert "crontab has weekly strategy entry" '[[ "$crontab_content" == *"weekly-strategy.sh"* ]]'
 assert "weekly-strategy runs on Sunday at 07:00" 'echo "$crontab_content" | grep -q "weekly-strategy" && echo "$crontab_content" | grep "weekly-strategy" | grep -qE "^0 7 \* \* 0"'
@@ -68,7 +72,7 @@ assert "shows usage with --help" '[[ "$output" == *"Usage"* || "$output" == *"us
 # --dry-run mode (does not modify actual crontab)
 output="$("$INSTALL_CRON" --dry-run 2>&1)"
 assert "dry-run shows crontab entries" '[[ "$output" == *"score-templates"* ]]'
-assert "dry-run shows all scheduled jobs" '[[ "$output" == *"dashboard.sh"* && "$output" == *"refine-prompts"* && "$output" == *"weekly-strategy"* ]]'
+assert "dry-run shows all scheduled jobs" '[[ "$output" == *"dashboard.sh"* && "$output" == *"refine-prompts"* && "$output" == *"weekly-strategy"* && "$output" == *"backup-state.sh"* ]]'
 assert "dry-run does not install" '[[ "$output" == *"dry"* || "$output" == *"preview"* || "$output" == *"would"* ]]'
 
 # --remove mode (dry)
@@ -97,7 +101,7 @@ while IFS= read -r line; do
     valid_lines=$((valid_lines + 1))
   fi
 done < "$CRONTAB_FILE"
-assert "crontab has exactly 4 cron entries" '[[ "$valid_lines" -eq 4 ]]'
+assert "crontab has exactly 5 cron entries" '[[ "$valid_lines" -eq 5 ]]'
 
 # --- Results ---
 echo ""

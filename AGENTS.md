@@ -21,6 +21,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/manage-patterns.sh` | Pattern registry: list, detail, mitigate, effectiveness |
 | `scripts/weekly-strategy.sh` | Weekly cross-cutting strategy report |
 | `scripts/dashboard.sh` | Generate static HTML dashboard from current learning-loop state |
+| `scripts/backup-state.sh` | Backup/restore state with retention policy |
 | `scripts/backfill.sh` | Process historical runs through the feedback pipeline |
 | `scripts/install-cron.sh` | Install/remove cron entries for scheduled execution |
 | `scripts/retrospective.sh` | Compare pre-loop vs post-loop metrics, suggest threshold tuning |
@@ -54,6 +55,9 @@ All scripts use env vars for testability:
 - `JUDGE_ENABLED` — set to `true` to enable sampled Opus judging in feedback collection
 - `JUDGE_SAMPLE_RATE` — sample ratio (0-1) for running `opus-judge.sh` during feedback collection
 - `JUDGE_SCRIPT` — override path for judge executable (default: `scripts/opus-judge.sh`)
+- `STATE_DIR` — state directory for backup/restore operations (default: `state/`)
+- `BACKUP_DIR` — backup archive directory (default: `state/backups/`)
+- `BACKUP_RETENTION_DAYS` — retention window for backup archives (default: `30`)
 
 ## Testing Conventions
 
