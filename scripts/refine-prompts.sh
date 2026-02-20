@@ -12,6 +12,7 @@ SCORES_DIR="${SCORES_DIR:-$PROJECT_DIR/state/scores}"
 TEMPLATES_DIR="${TEMPLATES_DIR:-$PROJECT_DIR/templates}"
 REGISTRY_FILE="${REGISTRY_FILE:-$PROJECT_DIR/state/feedback/pattern-registry.json}"
 REFINEMENT_LOG="${REFINEMENT_LOG:-$SCORES_DIR/refinement-log.json}"
+AB_TEST_TARGET_RUNS="${AB_TEST_TARGET_RUNS:-10}"
 
 MODE="preview"  # default: show what would be done
 
@@ -91,7 +92,7 @@ candidates="$(jq -r '
     ) |
     .template
   ] | .[]
-' "$SCORES_FILE" 2>/dev/null || true)"
+' "$SCORES_FILE" 2>/dev/null || true)" # REASON: Refinement preview should continue gracefully when score data is temporarily malformed.
 
 # Also check pattern count >= 5 for templates with sufficient runs
 if [[ -f "$REGISTRY_FILE" ]]; then
@@ -100,7 +101,7 @@ if [[ -f "$REGISTRY_FILE" ]]; then
       select(.total_runs >= 10) |
       .template
     ] | .[]
-  ' "$SCORES_FILE" 2>/dev/null || true)"
+  ' "$SCORES_FILE" 2>/dev/null || true)" # REASON: Pattern-trigger candidate discovery is best-effort and must not abort the workflow.
 
   # A template qualifies by pattern count if any pattern in the registry has count >= 5
   # and that template has >= 10 runs
@@ -161,7 +162,7 @@ for template_name in $candidates; do
   fi
 
   # Find top patterns from registry (count >= 5)
-  top_patterns="$(echo "$REGISTRY" | jq -r '[to_entries[] | select(.value.count >= 5) | .key] | .[]' 2>/dev/null || true)"
+  top_patterns="$(echo "$REGISTRY" | jq -r '[to_entries[] | select(.value.count >= 5) | .key] | .[]' 2>/dev/null || true)" # REASON: Missing/partial registry data should fall back to generic refinement instructions.
 
   # Build refinement instructions from patterns
   instructions=""
@@ -233,10 +234,25 @@ ${instructions}
 
   echo "Refined '$template_name' → '$variant_name' (trigger: $trigger)"
 
+  # Auto-create A/B test for new variant (idempotent by original+variant pair).
+  AB_SCRIPT="$SCRIPT_DIR/ab-tests.sh"
+  AB_TESTS_FILE="${AB_TESTS_FILE:-$SCORES_DIR/ab-tests.json}"
+  should_create_ab=true
+  if [[ -f "$AB_TESTS_FILE" ]]; then
+    if jq -e --arg o "$template_name" --arg v "$variant_name" \
+      '.tests[] | select(.original == $o and .variant == $v)' "$AB_TESTS_FILE" >/dev/null; then
+      should_create_ab=false
+    fi
+  fi
+
+  if [[ "$should_create_ab" == true && -x "$AB_SCRIPT" ]]; then
+    AB_TESTS_FILE="$AB_TESTS_FILE" "$AB_SCRIPT" create "$template_name" "$variant_name" --target-runs "$AB_TEST_TARGET_RUNS" >/dev/null 2>&1 || true # REASON: Refinement must not fail if A/B setup command is temporarily unavailable.
+  fi
+
   # Notify: variant created
   "$SCRIPT_DIR/notify.sh" variant-created \
     --template "$template_name" --variant "$variant_name" \
-    --trigger "$trigger" --pass-rate "$full_pass_rate" 2>/dev/null || true
+    --trigger "$trigger" --pass-rate "$full_pass_rate" 2>/dev/null || true # REASON: Notification failures must never block refinement output.
 
   refined_count=$((refined_count + 1))
 done

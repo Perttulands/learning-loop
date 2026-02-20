@@ -12,7 +12,7 @@ Bash + jq + JSON state files. All scripts are standalone executables. Tests use 
 | `scripts/detect-patterns.sh` | Detect failure patterns from run records, update registry |
 | `scripts/score-templates.sh` | Aggregate feedback into template and agent scores |
 | `scripts/select-template.sh` | Recommend template + agent for a task description |
-| `scripts/refine-prompts.sh` | Generate improved template variants from failure data |
+| `scripts/refine-prompts.sh` | Generate improved template variants from failure data and auto-create A/B tests |
 | `scripts/ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Safety limits: variant caps, rollback, loop breaker |
 | `scripts/notify.sh` | Send notifications via wake-gateway |

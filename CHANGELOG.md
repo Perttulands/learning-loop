@@ -16,3 +16,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - LL-006 (`athena-77y`): added promotion review queue state (`state/scores/promotion-review-queue.json`) and extended A/B lifecycle tests for gated and approved promotions.
 - LL-007 (`athena-bc8`): expanded weekly strategy reports with `metrics` and `highlights` sections for system-level run, score, A/B, and refinement visibility.
 - LL-007 (`athena-bc8`): added `tests/test-weekly-strategy-metrics.sh` to validate new weekly report metrics calculations and highlight generation.
+- LL-008 (`athena-bt3`): wired `refine-prompts.sh --auto` to create an A/B test automatically for each new variant (default target: 10 runs, idempotent by original+variant pair).
+- LL-008 (`athena-bt3`): added `tests/test-refine-auto-ab.sh` to verify variant generation and automatic A/B test creation behavior.

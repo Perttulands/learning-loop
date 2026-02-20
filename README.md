@@ -61,7 +61,7 @@ learning-loop/
 | `scripts/detect-patterns.sh` | Per-run | Tag failure patterns, update `state/feedback/pattern-registry.json` |
 | `scripts/score-templates.sh` | Hourly (cron) | Aggregate feedback into `state/scores/template-scores.json` and `state/scores/agent-scores.json` |
 | `scripts/select-template.sh` | Per-dispatch | Recommend template + agent based on scores and A/B tests |
-| `scripts/refine-prompts.sh` | Daily (cron) | Generate template variants from failure data |
+| `scripts/refine-prompts.sh` | Daily (cron) | Generate template variants from failure data and auto-create A/B tests |
 | `scripts/ab-tests.sh` | On-demand | A/B test lifecycle: create, pick, record, evaluate, review queue, approve |
 | `scripts/guardrails.sh` | Integrated | Safety: variant limits, rollback, loop breaker |
 | `scripts/notify.sh` | Integrated | Alerts via wake-gateway (variant events, regressions, weekly report) |
