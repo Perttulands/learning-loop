@@ -24,16 +24,16 @@ Every command outputs beautiful color-coded terminal output by default, supports
 ### Architecture
 
 ```
-cmd/loop/main.go           CLI with 10 commands (576 lines)
-internal/db/               SQLite layer: 4 tables, full CRUD (5 files, 635 lines)
-internal/ingest/            Run parsing + 8 pattern detectors (3 files, 310 lines)
-internal/query/             Relevance matching + 3 output formats (3 files, 500 lines)
+cmd/loop/main.go           CLI with 10 commands (587 lines)
+internal/db/               SQLite layer: 4 tables, full CRUD (5 files, 995 lines)
+internal/ingest/            Run parsing + 8 pattern detectors (3 files, 469 lines)
+internal/query/             Relevance matching + 3 output formats (3 files, 701 lines)
 internal/analyze/           Aggregation + insight generation (2 files, 506 lines)
 internal/report/            Report rendering (2 files, 234 lines)
-e2e_test.go                38 end-to-end CLI tests (580 lines)
+e2e_test.go                42 end-to-end CLI tests (723 lines)
 ```
 
-**Total: ~3,341 lines of Go** (including tests)
+**Total: 4,215 lines of Go** (including tests)
 
 ### Pattern Detection
 
@@ -60,7 +60,7 @@ Three output formats for different consumers:
 
 1. Full ingest → analyze → query pipeline end-to-end
 2. Beautiful CLI output with colors, unicode, clear formatting
-3. 76 tests passing across 5 consecutive runs
+3. 94 tests passing across 5 consecutive runs
 4. Zero truthsayer errors
 5. Single binary, zero runtime dependencies (embedded SQLite)
 6. Handles edge cases: unicode, null fields, extra fields, empty input, malformed JSON, duplicates

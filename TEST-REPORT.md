@@ -2,23 +2,23 @@
 
 ## Summary
 
-- **76 tests**, **0 failures**, **5 consecutive clean runs**
+- **94 tests**, **0 failures**, **5 consecutive clean runs**
 - **0 truthsayer errors** (28 warnings, 23 info — all acceptable)
 - Tests cover: unit tests, integration tests, end-to-end CLI tests
 
 ## Test Runs
 
-| Run | Result | Duration | Notes |
-|-----|--------|----------|-------|
-| 1   | PASS   | 14.9s    | All 76 tests pass |
-| 2   | PASS   | 11.6s    | All 76 tests pass |
-| 3   | PASS   | 11.6s    | All 76 tests pass |
-| 4   | PASS   | 11.9s    | All 76 tests pass |
-| 5   | PASS   | 11.8s    | All 76 tests pass |
+| Run | Result | Tests | Notes |
+|-----|--------|-------|-------|
+| 1   | PASS   | 94    | All 94 tests pass across 7 packages |
+| 2   | PASS   | 94    | All 94 tests pass across 7 packages |
+| 3   | PASS   | 94    | All 94 tests pass across 7 packages |
+| 4   | PASS   | 94    | All 94 tests pass across 7 packages |
+| 5   | PASS   | 94    | All 94 tests pass across 7 packages |
 
 ## Test Coverage by Package
 
-### `internal/db` — 10 tests
+### `internal/db` — 10 tests (3 files, 995 lines)
 - Open and migrate database
 - Insert and get runs (all fields, nullable fields)
 - List runs (all, limited, filtered by outcome)
@@ -29,7 +29,7 @@
 - Pattern-run matching (with duplicate handling)
 - Insight CRUD with tag filtering and deactivation
 
-### `internal/ingest` — 17 tests
+### `internal/ingest` — 17 tests (3 files, 469 lines)
 - Valid run ingestion from reader and JSON
 - Duplicate run prevention
 - Missing required field validation (id, task, outcome)
@@ -42,7 +42,7 @@
 - Pattern frequency increment over multiple runs
 - Clean success (no false positives)
 
-### `internal/query` — 10 tests
+### `internal/query` — 10 tests (3 files, 701 lines)
 - Query matching relevant runs
 - Success rate computation
 - Pattern detection in query results
@@ -54,7 +54,7 @@
 - Relevance scoring (auth run > db run for "fix auth bug")
 - Empty result messaging
 
-### `internal/analyze` — 8 tests
+### `internal/analyze` — 8 tests (2 files, 506 lines)
 - Basic analysis (runs counted, stats computed)
 - Insight generation from patterns
 - Pattern detection in analysis results
@@ -64,12 +64,12 @@
 - Success rate insight generation
 - Confidence scaling (3→50%, 5→75%, 10→90%)
 
-### `internal/report` — 3 tests
+### `internal/report` — 3 tests (2 files, 234 lines)
 - Empty report with onboarding message
 - Report with data (totals, success count)
 - JSON output format
 
-### End-to-End (CLI) — 38 tests
+### End-to-End (CLI) — 42 tests (723 lines)
 - **Init**: basic init, idempotent init
 - **Ingest**: stdin, file, duplicate rejection, malformed JSON, empty input, missing fields (4 variants), pattern detection, nonexistent file
 - **Query**: empty DB, with data, JSON output, injectable output
