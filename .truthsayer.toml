@@ -1,0 +1,8 @@
+[scan]
+exclude_dirs = ["vendor", "node_modules", "testdata", ".beads", "tests"]
+exclude_patterns = ["*_test.go", "test-*.sh"]
+
+[rules]
+disable = [
+  "bad-defaults.unvalidated-env-bash",
+]
