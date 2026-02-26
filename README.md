@@ -190,6 +190,12 @@ learning-loop/
 5. **Beautiful CLI** — colors, formatting, progress — not log spam
 6. **Immediate value** — useful after 3 runs, powerful after 30
 
+## Dependencies
+
+None required. Standalone tool.
+
+Intended integrations (not yet wired): `work` (run ingestion), `chiron` (evaluation scoring).
+
 ## Part of Polis
 
 Learning Loop was forged in the Agora — an autonomous multi-agent platform where AI agents build software and a bronze serpent makes sure they learn from every failure.
