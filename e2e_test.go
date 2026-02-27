@@ -345,6 +345,34 @@ func TestE2E_StatusWithData(t *testing.T) {
 	}
 }
 
+func TestE2E_StatusJSON(t *testing.T) {
+	dir := t.TempDir()
+	seedE2E(t, dir)
+	runLoop(t, dir, "analyze")
+
+	out, err := runLoop(t, dir, "status", "--json")
+	if err != nil {
+		t.Fatalf("status json failed: %v\n%s", err, out)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out)
+	}
+	if _, ok := result["total_runs"]; !ok {
+		t.Error("JSON missing 'total_runs' field")
+	}
+	if _, ok := result["success_rate"]; !ok {
+		t.Error("JSON missing 'success_rate' field")
+	}
+	if _, ok := result["success_runs"]; !ok {
+		t.Error("JSON missing 'success_runs' field")
+	}
+	if _, ok := result["failure_runs"]; !ok {
+		t.Error("JSON missing 'failure_runs' field")
+	}
+}
+
 // ─── PATTERNS ────────────────────────────────────────────────────────────────
 
 func TestE2E_PatternsEmpty(t *testing.T) {
@@ -373,6 +401,34 @@ func TestE2E_PatternsWithData(t *testing.T) {
 	}
 }
 
+func TestE2E_PatternsJSON(t *testing.T) {
+	dir := t.TempDir()
+	seedE2E(t, dir)
+
+	out, err := runLoop(t, dir, "patterns", "--json")
+	if err != nil {
+		t.Fatalf("patterns json failed: %v\n%s", err, out)
+	}
+
+	var patterns []map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &patterns); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out)
+	}
+	if len(patterns) == 0 {
+		t.Fatal("expected at least one pattern")
+	}
+	p := patterns[0]
+	if _, ok := p["name"]; !ok {
+		t.Error("pattern JSON missing 'name' field")
+	}
+	if _, ok := p["frequency"]; !ok {
+		t.Error("pattern JSON missing 'frequency' field")
+	}
+	if _, ok := p["impact"]; !ok {
+		t.Error("pattern JSON missing 'impact' field")
+	}
+}
+
 // ─── INSIGHTS ────────────────────────────────────────────────────────────────
 
 func TestE2E_InsightsEmpty(t *testing.T) {
@@ -385,6 +441,49 @@ func TestE2E_InsightsEmpty(t *testing.T) {
 	}
 	if !strings.Contains(out, "No insights") {
 		t.Errorf("empty insights should show message: %s", out)
+	}
+}
+
+func TestE2E_InsightsJSON(t *testing.T) {
+	dir := t.TempDir()
+	runLoop(t, dir, "init")
+
+	// Ingest enough failure runs to generate insights after analyze
+	for i := 0; i < 4; i++ {
+		input := fmt.Sprintf(`{"id":"ij-%d","task":"Fix bug %d","outcome":"failure","timestamp":"2026-02-22T%02d:00:00Z","tests_passed":false,"tags":["bugfix"]}`, i, i, 10+i)
+		_, err := runLoopStdin(t, dir, input, "ingest", "-")
+		if err != nil {
+			t.Fatalf("ingest ij-%d: %v", i, err)
+		}
+	}
+	for i := 0; i < 3; i++ {
+		input := fmt.Sprintf(`{"id":"ij-ok-%d","task":"Feature %d","outcome":"success","timestamp":"2026-02-22T%02d:00:00Z","tests_passed":true}`, i, i, 14+i)
+		_, err := runLoopStdin(t, dir, input, "ingest", "-")
+		if err != nil {
+			t.Fatalf("ingest ij-ok-%d: %v", i, err)
+		}
+	}
+
+	runLoop(t, dir, "analyze")
+
+	out, err := runLoop(t, dir, "insights", "--json")
+	if err != nil {
+		t.Fatalf("insights json failed: %v\n%s", err, out)
+	}
+
+	var insights []map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &insights); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out)
+	}
+	if len(insights) == 0 {
+		t.Fatal("expected at least one insight after analyze")
+	}
+	ins := insights[0]
+	if _, ok := ins["text"]; !ok {
+		t.Error("insight JSON missing 'text' field")
+	}
+	if _, ok := ins["confidence"]; !ok {
+		t.Error("insight JSON missing 'confidence' field")
 	}
 }
 
