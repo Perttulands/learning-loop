@@ -255,3 +255,60 @@ func TestReportJSON(t *testing.T) {
 		t.Error("JSON should contain total_runs")
 	}
 }
+
+func TestReportJSONWithData(t *testing.T) {
+	d := testDB(t)
+	ing := ingest.New(d)
+
+	runs := []string{
+		`{"id":"j1","task":"t1","outcome":"success","timestamp":"2026-01-01T00:00:00Z","tests_passed":true}`,
+		`{"id":"j2","task":"t2","outcome":"failure","timestamp":"2026-01-01T01:00:00Z","tests_passed":false}`,
+	}
+	for _, r := range runs {
+		_, _, err := ing.IngestReader(strings.NewReader(r))
+		if err != nil {
+			t.Fatalf("seed: %v", err)
+		}
+	}
+
+	r := New(d)
+	rpt, err := r.Generate()
+	if err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+
+	var buf bytes.Buffer
+	if err := rpt.WriteJSON(&buf); err != nil {
+		t.Fatalf("json: %v", err)
+	}
+
+	out := buf.String()
+	if !strings.Contains(out, `"total_runs"`) {
+		t.Error("JSON should contain total_runs")
+	}
+	if !strings.Contains(out, `"success_rate"`) {
+		t.Error("JSON should contain success_rate")
+	}
+	if !strings.Contains(out, `"patterns"`) {
+		t.Error("JSON should contain patterns")
+	}
+	if !strings.Contains(out, `"insights"`) {
+		t.Error("JSON should contain insights")
+	}
+}
+
+func TestGenerateErrorOnClosedDB(t *testing.T) {
+	d := testDB(t)
+	r := New(d)
+
+	// Close db to force errors from Generate
+	d.Close()
+
+	_, err := r.Generate()
+	if err == nil {
+		t.Fatal("Generate should fail on closed DB")
+	}
+	if !strings.Contains(err.Error(), "count runs") {
+		t.Errorf("error should mention count runs: %v", err)
+	}
+}
