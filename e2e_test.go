@@ -388,6 +388,100 @@ func TestE2E_InsightsEmpty(t *testing.T) {
 	}
 }
 
+func TestE2E_InsightsTagsFilter(t *testing.T) {
+	dir := t.TempDir()
+	runLoop(t, dir, "init")
+
+	// Ingest runs that trigger "tests-failed" pattern (category="code") >= 3 times
+	// so that analyze generates an insight with tags ["code-quality","testing"]
+	for i := 0; i < 4; i++ {
+		input := fmt.Sprintf(`{"id":"tag-%d","task":"Fix bug %d","outcome":"failure","timestamp":"2026-02-22T%02d:00:00Z","tests_passed":false,"tags":["bugfix"]}`, i, i, 10+i)
+		_, err := runLoopStdin(t, dir, input, "ingest", "-")
+		if err != nil {
+			t.Fatalf("ingest tag-%d: %v", i, err)
+		}
+	}
+	// Also ingest some successes so overall stats work
+	for i := 0; i < 3; i++ {
+		input := fmt.Sprintf(`{"id":"tag-ok-%d","task":"Feature %d","outcome":"success","timestamp":"2026-02-22T%02d:00:00Z","tests_passed":true,"tags":["feature"]}`, i, i, 14+i)
+		_, err := runLoopStdin(t, dir, input, "ingest", "-")
+		if err != nil {
+			t.Fatalf("ingest tag-ok-%d: %v", i, err)
+		}
+	}
+
+	// Run analyze to generate insights from patterns
+	out, err := runLoop(t, dir, "analyze")
+	if err != nil {
+		t.Fatalf("analyze: %v\n%s", err, out)
+	}
+
+	// First: get all insights (no tag filter) as JSON
+	allOut, err := runLoop(t, dir, "insights", "--json")
+	if err != nil {
+		t.Fatalf("insights --json: %v\n%s", err, allOut)
+	}
+	var allInsights []map[string]interface{}
+	if err := json.Unmarshal([]byte(allOut), &allInsights); err != nil {
+		t.Fatalf("parse all insights: %v\n%s", err, allOut)
+	}
+	if len(allInsights) == 0 {
+		t.Fatal("expected at least one insight after analyze")
+	}
+
+	// Filter by "testing" tag — should find the tests-failed insight
+	filteredOut, err := runLoop(t, dir, "insights", "--tags", "testing", "--json")
+	if err != nil {
+		t.Fatalf("insights --tags testing --json: %v\n%s", err, filteredOut)
+	}
+	var filteredInsights []map[string]interface{}
+	if err := json.Unmarshal([]byte(filteredOut), &filteredInsights); err != nil {
+		t.Fatalf("parse filtered insights: %v\n%s", err, filteredOut)
+	}
+	if len(filteredInsights) == 0 {
+		t.Fatal("expected insights with 'testing' tag")
+	}
+	// Verify all filtered insights have the "testing" tag
+	for _, ins := range filteredInsights {
+		tags, ok := ins["tags"].([]interface{})
+		if !ok {
+			continue
+		}
+		found := false
+		for _, tag := range tags {
+			if tag.(string) == "testing" {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("filtered insight should have 'testing' tag, got tags: %v", tags)
+		}
+	}
+
+	// Filter by a tag that no insight has — should return empty
+	emptyOut, err := runLoop(t, dir, "insights", "--tags", "nonexistent-tag-xyz", "--json")
+	if err != nil {
+		t.Fatalf("insights --tags nonexistent: %v\n%s", err, emptyOut)
+	}
+	// JSON output for empty list should be null or []
+	trimmed := strings.TrimSpace(emptyOut)
+	if trimmed != "null" && trimmed != "[]" {
+		var emptyInsights []map[string]interface{}
+		if err := json.Unmarshal([]byte(emptyOut), &emptyInsights); err != nil {
+			t.Fatalf("parse empty insights: %v\n%s", err, emptyOut)
+		}
+		if len(emptyInsights) != 0 {
+			t.Errorf("nonexistent tag should return no insights, got %d", len(emptyInsights))
+		}
+	}
+
+	// Filtered count should be <= total count
+	if len(filteredInsights) > len(allInsights) {
+		t.Errorf("filtered (%d) should be <= total (%d)", len(filteredInsights), len(allInsights))
+	}
+}
+
 // ─── RUNS ────────────────────────────────────────────────────────────────────
 
 func TestE2E_RunsEmpty(t *testing.T) {
