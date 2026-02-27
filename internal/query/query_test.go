@@ -180,6 +180,119 @@ func TestQueryInjectOutput(t *testing.T) {
 	}
 }
 
+func TestWriteInjectEmpty(t *testing.T) {
+	r := &Result{
+		Query:       "fix auth bug",
+		MatchedRuns: 0,
+		Insights:    nil,
+	}
+
+	var buf bytes.Buffer
+	r.WriteInject(&buf)
+	output := buf.String()
+
+	if !strings.Contains(output, "## Learnings for:") {
+		t.Error("should contain markdown header")
+	}
+	if !strings.Contains(output, "No relevant learnings") {
+		t.Error("empty result should say no learnings found")
+	}
+}
+
+func TestWriteInjectWithPatterns(t *testing.T) {
+	r := &Result{
+		Query:       "fix auth bug",
+		MatchedRuns: 5,
+		SuccessRate: 0.6,
+		TopPatterns: []PatternStat{
+			{Name: "tests-failed", Description: "Tests did not pass", Count: 3, Impact: "high"},
+			{Name: "no-lint", Description: "Lint not run", Count: 2, Impact: "medium"},
+		},
+	}
+
+	var buf bytes.Buffer
+	r.WriteInject(&buf)
+	output := buf.String()
+
+	if !strings.Contains(output, "From 5 similar runs") {
+		t.Errorf("should show matched run count: %s", output)
+	}
+	if !strings.Contains(output, "60%") {
+		t.Errorf("should show success rate: %s", output)
+	}
+	if !strings.Contains(output, "Common failure patterns") {
+		t.Errorf("should show failure patterns header: %s", output)
+	}
+	if !strings.Contains(output, "tests-failed (3 occurrences, high impact)") {
+		t.Errorf("should show pattern detail: %s", output)
+	}
+	if !strings.Contains(output, "no-lint (2 occurrences, medium impact)") {
+		t.Errorf("should show second pattern: %s", output)
+	}
+}
+
+func TestWriteInjectWithSignals(t *testing.T) {
+	r := &Result{
+		Query:          "fix auth bug",
+		MatchedRuns:    5,
+		SuccessRate:    0.8,
+		SuccessSignals: []string{"Edited test files alongside source → 90% success rate", "Completed in under 10 minutes → 85% success rate"},
+	}
+
+	var buf bytes.Buffer
+	r.WriteInject(&buf)
+	output := buf.String()
+
+	if !strings.Contains(output, "Success patterns:") {
+		t.Errorf("should show success patterns header: %s", output)
+	}
+	if !strings.Contains(output, "Edited test files alongside source") {
+		t.Errorf("should show first signal: %s", output)
+	}
+	if !strings.Contains(output, "Completed in under 10 minutes") {
+		t.Errorf("should show second signal: %s", output)
+	}
+}
+
+func TestWriteInjectFull(t *testing.T) {
+	r := &Result{
+		Query:       "fix auth bug",
+		MatchedRuns: 10,
+		SuccessRate: 0.7,
+		Insights: []*db.Insight{
+			{Text: "Always run tests before committing", Confidence: 0.95},
+			{Text: "Short tasks succeed more often", Confidence: 0.80},
+		},
+		TopPatterns: []PatternStat{
+			{Name: "tests-failed", Count: 4, Impact: "high"},
+		},
+		SuccessSignals: []string{"Ran tests and they passed → 100% success rate"},
+	}
+
+	var buf bytes.Buffer
+	r.WriteInject(&buf)
+	output := buf.String()
+
+	if !strings.Contains(output, "## Learnings for:") {
+		t.Error("should contain markdown header")
+	}
+	if !strings.Contains(output, "From 10 similar runs") {
+		t.Errorf("should show matched run count: %s", output)
+	}
+	if !strings.Contains(output, "1. Always run tests before committing") {
+		t.Errorf("should show numbered insights: %s", output)
+	}
+	if !strings.Contains(output, "2. Short tasks succeed more often") {
+		t.Errorf("should show second insight: %s", output)
+	}
+	if !strings.Contains(output, "Common failure patterns") {
+		t.Errorf("should show patterns section: %s", output)
+	}
+	if !strings.Contains(output, "Success patterns:") {
+		t.Errorf("should show signals section: %s", output)
+	}
+}
+
 func TestQueryEmptyOutputGraceful(t *testing.T) {
 	d := testDB(t)
 	e := New(d)
