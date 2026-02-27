@@ -559,6 +559,69 @@ func TestE2E_RunsLast(t *testing.T) {
 	}
 }
 
+// ─── REPORT ──────────────────────────────────────────────────────────────────
+
+func TestE2E_ReportEmpty(t *testing.T) {
+	dir := t.TempDir()
+	runLoop(t, dir, "init")
+
+	out, err := runLoop(t, dir, "report")
+	if err != nil {
+		t.Fatalf("report failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "No data yet") {
+		t.Errorf("empty report should show onboarding: %s", out)
+	}
+}
+
+func TestE2E_ReportWithData(t *testing.T) {
+	dir := t.TempDir()
+	seedE2E(t, dir)
+	runLoop(t, dir, "analyze")
+
+	out, err := runLoop(t, dir, "report")
+	if err != nil {
+		t.Fatalf("report failed: %v\n%s", err, out)
+	}
+	if !strings.Contains(out, "Learning Loop Report") {
+		t.Errorf("report should show header: %s", out)
+	}
+	if !strings.Contains(out, "Runs:") {
+		t.Errorf("report should show runs stat: %s", out)
+	}
+	if !strings.Contains(out, "Rate:") {
+		t.Errorf("report should show success rate: %s", out)
+	}
+}
+
+func TestE2E_ReportJSON(t *testing.T) {
+	dir := t.TempDir()
+	seedE2E(t, dir)
+	runLoop(t, dir, "analyze")
+
+	out, err := runLoop(t, dir, "report", "--json")
+	if err != nil {
+		t.Fatalf("report json failed: %v\n%s", err, out)
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal([]byte(out), &result); err != nil {
+		t.Fatalf("invalid JSON: %v\n%s", err, out)
+	}
+	if _, ok := result["total_runs"]; !ok {
+		t.Error("JSON missing 'total_runs' field")
+	}
+	if _, ok := result["success_rate"]; !ok {
+		t.Error("JSON missing 'success_rate' field")
+	}
+	if _, ok := result["patterns"]; !ok {
+		t.Error("JSON missing 'patterns' field")
+	}
+	if _, ok := result["insights"]; !ok {
+		t.Error("JSON missing 'insights' field")
+	}
+}
+
 // ─── VERSION ─────────────────────────────────────────────────────────────────
 
 func TestE2E_Version(t *testing.T) {
