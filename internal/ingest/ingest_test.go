@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -235,5 +236,106 @@ func TestIngestFromJSON(t *testing.T) {
 	}
 	if run.ID != "json-1" {
 		t.Errorf("id = %q", run.ID)
+	}
+}
+
+// ── error paths ───────────────────────────────────────────
+
+func TestIngestJSON_MalformedJSON(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestJSON([]byte("not json at all"))
+	if err == nil {
+		t.Fatal("expected error for malformed JSON")
+	}
+	if !strings.Contains(err.Error(), "parse run record") {
+		t.Errorf("error = %q, want 'parse run record'", err.Error())
+	}
+}
+
+func TestIngestJSON_EmptyInput(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestJSON([]byte(""))
+	if err == nil {
+		t.Fatal("expected error for empty input")
+	}
+}
+
+func TestIngestJSON_EmptyObject(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestJSON([]byte("{}"))
+	if err == nil {
+		t.Fatal("expected error for empty JSON object (missing required fields)")
+	}
+	if !strings.Contains(err.Error(), "missing required field") {
+		t.Errorf("error = %q, want 'missing required field'", err.Error())
+	}
+}
+
+func TestIngestReader_MalformedJSON(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestReader(strings.NewReader("{bad json"))
+	if err == nil {
+		t.Fatal("expected error for malformed reader input")
+	}
+}
+
+func TestIngestReader_EmptyInput(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestReader(strings.NewReader(""))
+	if err == nil {
+		t.Fatal("expected error for empty reader")
+	}
+}
+
+type errReader struct{}
+
+func (errReader) Read(p []byte) (n int, err error) {
+	return 0, fmt.Errorf("simulated read error")
+}
+
+func TestIngestReader_ReadError(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestReader(errReader{})
+	if err == nil {
+		t.Fatal("expected error for broken reader")
+	}
+	if !strings.Contains(err.Error(), "read input") {
+		t.Errorf("error = %q, want 'read input'", err.Error())
+	}
+}
+
+func TestIngestJSON_PartialFields(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	// Has id and task but no outcome
+	_, _, err := ing.IngestJSON([]byte(`{"id":"p1","task":"t"}`))
+	if err == nil {
+		t.Fatal("expected error for missing outcome")
+	}
+}
+
+func TestIngestJSON_InvalidOutcomeValue(t *testing.T) {
+	d := testDB(t)
+	ing := New(d)
+
+	_, _, err := ing.IngestJSON([]byte(`{"id":"inv","task":"t","outcome":"unknown"}`))
+	if err == nil {
+		t.Fatal("expected error for invalid outcome")
+	}
+	if !strings.Contains(err.Error(), "invalid outcome") {
+		t.Errorf("error = %q, want 'invalid outcome'", err.Error())
 	}
 }

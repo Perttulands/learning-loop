@@ -303,6 +303,35 @@ func TestPatternMatches(t *testing.T) {
 	}
 }
 
+func TestConn(t *testing.T) {
+	d := testDB(t)
+	conn := d.Conn()
+	if conn == nil {
+		t.Fatal("Conn() should not return nil")
+	}
+	// Verify the connection works
+	var n int
+	if err := conn.QueryRow("SELECT 1").Scan(&n); err != nil {
+		t.Fatalf("Conn() should return a working connection: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("expected 1, got %d", n)
+	}
+}
+
+func TestOpenEmptyPath(t *testing.T) {
+	origDir, _ := os.Getwd()
+	dir := t.TempDir()
+	os.Chdir(dir)
+	defer os.Chdir(origDir)
+
+	d, err := Open("")
+	if err != nil {
+		t.Fatalf("Open with empty path: %v", err)
+	}
+	d.Close()
+}
+
 func TestInsights(t *testing.T) {
 	d := testDB(t)
 
