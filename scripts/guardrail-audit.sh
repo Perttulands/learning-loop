@@ -28,7 +28,9 @@ fi
 run_check() {
   local id="$1" cmd="$2"
   local output
-  output="$(SCORES_DIR="$SCORES_DIR" FEEDBACK_DIR="$FEEDBACK_DIR" AB_TESTS_FILE="${AB_TESTS_FILE:-$SCORES_DIR/ab-tests.json}" REFINEMENT_LOG="${REFINEMENT_LOG:-$SCORES_DIR/refinement-log.json}" bash -lc "$cmd" 2>&1 || true)" # REASON: Audit should capture failing command output instead of aborting at first failure.
+  local ab_tests_file="${AB_TESTS_FILE:-$SCORES_DIR/ab-tests.json}"
+  local refinement_log="${REFINEMENT_LOG:-$SCORES_DIR/refinement-log.json}"
+  output="$(SCORES_DIR="$SCORES_DIR" FEEDBACK_DIR="$FEEDBACK_DIR" AB_TESTS_FILE="$ab_tests_file" REFINEMENT_LOG="$refinement_log" bash -lc "$cmd" 2>&1 || true)" # REASON: Audit should capture failing command output instead of aborting at first failure.
 
   jq -n --arg id "$id" --arg command "$cmd" --arg output "$output" '{id: $id, command: $command, output: $output}'
 }

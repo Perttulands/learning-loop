@@ -16,3 +16,9 @@ ralph-*.log
 # Environment
 .env
 .env.*
+
+# Compiled binary
+loop
+
+# Runtime state
+.learning-loop/

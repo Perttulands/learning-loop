@@ -63,10 +63,8 @@ for case_entry in "${CASES[@]}"; do
   recommendation=$(bash "$SELECT" "$prompt" 2>/dev/null) || recommendation="{}" # REASON: Validation should continue even if a single recommendation call fails.
 
   rec_type=$(echo "$recommendation" | jq -r '.task_type // "error"')
-  rec_template=$(echo "$recommendation" | jq -r '.template // "unknown"')
   rec_agent=$(echo "$recommendation" | jq -r '.agent // "unknown"')
   rec_confidence=$(echo "$recommendation" | jq -r '.confidence // "none"')
-  rec_score=$(echo "$recommendation" | jq -r '.score // 0')
 
   # Check if classification matches expected
   if [[ "$rec_type" == "$expected" ]]; then
