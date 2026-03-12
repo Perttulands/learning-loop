@@ -1,0 +1,7 @@
+[check]
+test = ["bash", "-lc", "for t in tests/test-*.sh; do bash \"$t\"; done"]
+truthsayer_ci = ["truthsayer", "ci", "."]
+
+[[check.lint]]
+name = "shellcheck"
+cmd = ["bash", "-lc", "shellcheck -x config/env.sh scripts/*.sh"]

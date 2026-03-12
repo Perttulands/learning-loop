@@ -40,7 +40,7 @@ else
   ab_data='{"tests":[]}'
 fi
 
-latest_strategy_file="$(ls -1 "$REPORTS_DIR"/strategy-*.json 2>/dev/null | tail -n 1 || true)" # REASON: Dashboard generation must continue when no strategy report exists yet.
+latest_strategy_file="$(find "$REPORTS_DIR" -maxdepth 1 -type f -name 'strategy-*.json' | sort | tail -n 1 || true)" # REASON: Dashboard generation must continue when no strategy report exists yet.
 if [[ -n "$latest_strategy_file" && -f "$latest_strategy_file" ]]; then
   strategy_data="$(cat "$latest_strategy_file")"
 else

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Learning Loop environment configuration
 # Source this before running scripts, or export these vars
 

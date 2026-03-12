@@ -213,7 +213,7 @@ cmd_auto_rollback() {
 
 # Check if promotion is allowed (respects NO_AUTO_PROMOTE)
 cmd_check_promote() {
-  local orig="$1" var="$2" orig_score="$3" var_score="$4"
+  local orig="$1" var="$2" orig_score="$3" _var_score="$4"
 
   if [[ "${NO_AUTO_PROMOTE:-false}" == "true" ]]; then
     echo "Promotion gated: $var beats $orig but NO_AUTO_PROMOTE is set. Requires human review."

@@ -50,7 +50,11 @@ VALIDATE="$PROJECT_DIR/scripts/validate-selection.sh"
 
 # --- Setup: ensure scores exist ---
 RUNS_DIR="$HOME/.openclaw/workspace/state/runs"
-if [[ ! -f "$PROJECT_DIR/state/scores/template-scores.json" ]]; then
+if [[ ! -d "$RUNS_DIR" ]]; then
+  RUNS_DIR="$(mktemp -d)"
+  trap 'rm -rf "$RUNS_DIR"' EXIT
+fi
+if [[ -d "$HOME/.openclaw/workspace/state/runs" && ! -f "$PROJECT_DIR/state/scores/template-scores.json" ]]; then
   bash "$PROJECT_DIR/scripts/backfill.sh" "$RUNS_DIR" >/dev/null 2>&1
 fi
 

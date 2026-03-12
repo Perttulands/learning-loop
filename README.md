@@ -167,6 +167,7 @@ Beyond the Go binary, the `scripts/` directory contains the full flywheel automa
 | `refine-prompts.sh` | Generate improved template variants from failure data |
 | `ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate, approve |
 | `guardrails.sh` | Safety limits: variant caps, rollback, loop breaker |
+| `retrospective.sh` | Compare pre-loop vs post-loop outcomes and write a retrospective report |
 | `weekly-strategy.sh` | Weekly cross-cutting strategy report |
 | `dashboard.sh` | Generate static HTML dashboard |
 | `backup-state.sh` | Backup/restore state with retention policy |
