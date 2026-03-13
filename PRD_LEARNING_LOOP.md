@@ -172,8 +172,8 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Infra failure isolation: exclude infra patterns from template scoring
 
 - [x] **US-404** Documentation and integration polish
-  - Update `docs/flywheel.md` with learning loop architecture
-  - Update `docs/templates-guide.md` with variant lifecycle
+  - Update `docs/archive/flywheel.md` with learning loop architecture
+  - Update `docs/archive/templates-guide.md` with variant lifecycle
   - Update `AGENTS.md` with new scripts and workflow
   - Add learning loop section to workspace README
 
@@ -183,7 +183,7 @@ The flywheel runs unattended with safety guardrails, notifications, and document
   - Generate before/after report on pass rate, template usage, failure patterns
   - Identify threshold tuning opportunities
 
-- [x] **US-405a** Add retrospective.sh to AGENTS.md, README.md, and docs/flywheel.md (5 min)
+- [x] **US-405a** Add retrospective.sh to AGENTS.md, README.md, and docs/archive/flywheel.md (5 min)
 
 - [x] **US-REVIEW-S4** Review Sprint 4
   - End-to-end test: dispatch → verify → feedback → score → select → refine cycle

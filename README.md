@@ -10,7 +10,9 @@
 
 Every AI agent run produces signal — what worked, what failed, how long it took, what files it touched. Almost all of that signal evaporates the moment the run ends. The next agent starts from scratch, makes the same mistakes, and nobody learns anything.
 
-Learning Loop is the fix. It's a single Go binary backed by SQLite that ingests run records, detects failure patterns, and feeds that knowledge back into future runs. You call `loop ingest` when a run finishes, `loop query` before the next one starts, and the system gets smarter without you touching a prompt. On top of the binary sits a shell-scripts layer that handles the full flywheel: template scoring, A/B testing, automated refinement, cron-driven analysis, and a static HTML dashboard.
+Learning Loop is the fix. It's a single Go binary backed by SQLite that ingests run records, detects failure patterns, and feeds that knowledge back into future runs. You call `loop ingest` when a run finishes, `loop query` before the next one starts, and the system gets smarter without you touching a prompt.
+
+Legacy shell-era flywheel docs still exist for historical reference, but they are archived under `docs/archive/` and should not be treated as the primary architecture.
 
 ---
 
@@ -62,12 +64,9 @@ The Go binary (`loop`) handles the inner cycle: ingest, query, analyze. The shel
 - ✅ `loop status`, `patterns`, `insights`, `runs`, `report` — all working with `--json` output
 - ✅ Single binary, zero runtime dependencies, v0.1.0
 
-**Scripts layer (bash + jq):**
-- ✅ Feedback collection, pattern detection, template scoring
-- ✅ A/B test lifecycle (create, pick, record, evaluate, approve)
-- ✅ Guardrails (variant caps, rollback, loop breaker)
-- ✅ Weekly strategy reports, dashboard generation, backup/restore
-- ✅ Cron integration for hourly/daily/weekly automation
+**Scripts layer (bash + jq, legacy / compatibility only):**
+- ✅ Scripts still exist for historical/compatibility use
+- ⚠️ Shell-era flywheel docs are archived under `docs/archive/`
 - ⚠️ `config/env.sh` paths still reference old workspace layout — needs update for your environment
 - ⚠️ No integration wired to `ergon` (work orchestration) yet — ingestion is manual
 - ⚠️ Opus judge script (`scripts/opus-judge.sh`) requires external API access
@@ -155,7 +154,8 @@ loop version                      Print version (v0.1.0)
 
 ## Scripts Layer
 
-Beyond the Go binary, the `scripts/` directory contains the full flywheel automation:
+Beyond the Go binary, the `scripts/` directory contains legacy flywheel
+automation that is still present for compatibility and experiments:
 
 | Script | Purpose |
 |--------|---------|
@@ -174,6 +174,12 @@ Beyond the Go binary, the `scripts/` directory contains the full flywheel automa
 | `install-cron.sh` | Install/remove cron entries for scheduled execution |
 
 Cron schedule: scoring hourly, refinement daily at 03:00 UTC, strategy weekly on Sundays.
+
+Historical shell-era design docs now live under `docs/archive/`:
+
+- `docs/archive/flywheel.md`
+- `docs/archive/judge-design.md`
+- `docs/archive/templates-guide.md`
 
 ## Run Record Format
 
