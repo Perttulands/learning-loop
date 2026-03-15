@@ -4,4 +4,4 @@ truthsayer_ci = ["truthsayer", "ci", "."]
 
 [[check.lint]]
 name = "shellcheck"
-cmd = ["bash", "-lc", "shellcheck -x config/env.sh scripts/*.sh"]
+cmd = ["bash", "-lc", "shellcheck -x scripts/*.sh"]

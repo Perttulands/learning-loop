@@ -10,7 +10,9 @@
 
 Every AI agent run produces signal — what worked, what failed, how long it took, what files it touched. Almost all of that signal evaporates the moment the run ends. The next agent starts from scratch, makes the same mistakes, and nobody learns anything.
 
-Learning Loop is the fix. It's a single Go binary backed by SQLite that ingests run records, detects failure patterns, and feeds that knowledge back into future runs. You call `loop ingest` when a run finishes, `loop query` before the next one starts, and the system gets smarter without you touching a prompt. On top of the binary sits a shell-scripts layer that handles the full flywheel: template scoring, A/B testing, automated refinement, cron-driven analysis, and a static HTML dashboard.
+Learning Loop is the fix. It's a single Go binary backed by SQLite that ingests run records, detects failure patterns, and feeds that knowledge back into future runs. You call `loop ingest` when a run finishes, `loop query` before the next one starts, and the system gets smarter without you touching a prompt.
+
+Legacy shell-era flywheel docs still exist for historical reference, but they are archived under `docs/archive/` and should not be treated as the primary architecture.
 
 ---
 
@@ -50,7 +52,7 @@ Dispatch → Execute → Verify → Record → Analyze → Score → Select → 
     └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-The Go binary (`loop`) handles the inner cycle: ingest, query, analyze. The shell scripts handle the outer cycle: scoring templates, selecting the best agent+template pair for a task, refining underperformers, and running A/B tests to validate changes.
+The Go binary (`loop`) is the active architecture: ingest, query, analyze. Legacy shell-era flywheel scripts are archived under `docs/archive/ghost-shell-era/` and are not part of the live system.
 
 ## Current Status
 
@@ -62,15 +64,11 @@ The Go binary (`loop`) handles the inner cycle: ingest, query, analyze. The shel
 - ✅ `loop status`, `patterns`, `insights`, `runs`, `report` — all working with `--json` output
 - ✅ Single binary, zero runtime dependencies, v0.1.0
 
-**Scripts layer (bash + jq):**
-- ✅ Feedback collection, pattern detection, template scoring
-- ✅ A/B test lifecycle (create, pick, record, evaluate, approve)
-- ✅ Guardrails (variant caps, rollback, loop breaker)
-- ✅ Weekly strategy reports, dashboard generation, backup/restore
-- ✅ Cron integration for hourly/daily/weekly automation
-- ⚠️ `config/env.sh` paths still reference old workspace layout — needs update for your environment
-- ⚠️ No integration wired to `ergon` (work orchestration) yet — ingestion is manual
-- ⚠️ Opus judge script (`scripts/opus-judge.sh`) requires external API access
+**Archived shell era:**
+- ⚠️ `env.sh`, `feedback-collector.sh`, `select-template.sh`, and `score-templates.sh` were archived on 2026-03-13 under `docs/archive/ghost-shell-era/`
+- ⚠️ Archived shell-era flywheel docs remain under `docs/archive/`
+- ⚠️ The live system does not call the archived shell layer
+- ⚠️ `scripts/opus-judge.sh` still requires external API access when used manually
 
 ## Install
 
@@ -153,17 +151,18 @@ loop report --json                Machine-readable report
 loop version                      Print version (v0.1.0)
 ```
 
-## Scripts Layer
+## Archived Scripts
 
-Beyond the Go binary, the `scripts/` directory contains the full flywheel automation:
+The live system is the Go binary. Archived shell-era files are kept only for
+historical reference under `docs/archive/ghost-shell-era/`.
+
+The remaining `scripts/` directory contains optional tooling that is not part
+of the ingest/query path:
 
 | Script | Purpose |
 |--------|---------|
-| `feedback-collector.sh` | Classify run outcomes, extract signals, write feedback records |
 | `opus-judge.sh` | Qualitative Opus-style quality assessment for a run |
 | `detect-patterns.sh` | Detect failure patterns from run records, update registry |
-| `score-templates.sh` | Aggregate feedback into template and agent scores |
-| `select-template.sh` | Recommend template + agent pair for a task description |
 | `refine-prompts.sh` | Generate improved template variants from failure data |
 | `ab-tests.sh` | A/B test lifecycle: create, pick, record, evaluate, approve |
 | `guardrails.sh` | Safety limits: variant caps, rollback, loop breaker |
@@ -174,6 +173,13 @@ Beyond the Go binary, the `scripts/` directory contains the full flywheel automa
 | `install-cron.sh` | Install/remove cron entries for scheduled execution |
 
 Cron schedule: scoring hourly, refinement daily at 03:00 UTC, strategy weekly on Sundays.
+
+Historical shell-era design docs now live under `docs/archive/`:
+
+- `docs/archive/flywheel.md`
+- `docs/archive/judge-design.md`
+- `docs/archive/templates-guide.md`
+- `docs/archive/ghost-shell-era/`
 
 ## Run Record Format
 
