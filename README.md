@@ -265,7 +265,7 @@ Sibling tools in the ecosystem:
 | Cerberus | [cerberus-gate](https://github.com/Perttulands/cerberus-gate) | Access control gate |
 | Chiron | [chiron-trainer](https://github.com/Perttulands/chiron-trainer) | Agent training framework |
 | Senate | [senate](https://github.com/Perttulands/senate) | Multi-agent deliberation |
-| Beads | [beads-polis](https://github.com/Perttulands/beads-polis) | Trace and provenance |
+| Beads | [beads-polis](https://github.com/Perttulands/beads-polis) | Work tracking |
 | Truthsayer | [truthsayer](https://github.com/Perttulands/truthsayer) | Code quality verification |
 | Horkos | [horkos-oathkeeper](https://github.com/Perttulands/horkos-oathkeeper) | Contract enforcement |
 | Argus | [argus-watcher](https://github.com/Perttulands/argus-watcher) | Infrastructure monitoring |
